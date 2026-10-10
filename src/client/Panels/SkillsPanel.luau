@@ -104,15 +104,18 @@ local function render(content)
 
 	local node = selected and Stats.FindNode(selected)
 	if not node then
-		Create.Label("Select a skill to see what it does. ★ = active ability. Every level grants 1 skill point; "
-			.. "deeper tiers unlock at levels "
-			.. table.concat(GameConfig.TierLevelRequirements, ", ")
-			.. ". Seer Ilsa in Riverwatch can reset your skills.", {
-			TextColor3 = Theme.Muted,
-			Size = UDim2.fromScale(1, 1),
-			TextYAlignment = Enum.TextYAlignment.Top,
-			Parent = detail,
-		})
+		Create.Label(
+			"Select a skill to see what it does. ★ = active ability. Every level grants 1 skill point; "
+				.. "deeper tiers unlock at levels "
+				.. table.concat(GameConfig.TierLevelRequirements, ", ")
+				.. ". Seer Ilsa in Riverwatch can reset your skills.",
+			{
+				TextColor3 = Theme.Muted,
+				Size = UDim2.fromScale(1, 1),
+				TextYAlignment = Enum.TextYAlignment.Top,
+				Parent = detail,
+			}
+		)
 		return
 	end
 
@@ -146,18 +149,23 @@ local function render(content)
 		TextColor3 = Theme.Muted,
 		Parent = detail,
 	})
-	local button = Create.Button(canUnlock and "Learn" or (reason or "Locked"), canUnlock and Theme.Good or Theme.PanelLight, function()
-		if canUnlock then
-			Net.Request("UnlockSkill", selected)
-		end
-	end, {
-		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.fromScale(1, 0.5),
-		Size = UDim2.fromOffset(140, 44),
-		TextWrapped = true,
-		TextSize = 13,
-		Parent = detail,
-	})
+	local button = Create.Button(
+		canUnlock and "Learn" or (reason or "Locked"),
+		canUnlock and Theme.Good or Theme.PanelLight,
+		function()
+			if canUnlock then
+				Net.Request("UnlockSkill", selected)
+			end
+		end,
+		{
+			AnchorPoint = Vector2.new(1, 0.5),
+			Position = UDim2.fromScale(1, 0.5),
+			Size = UDim2.fromOffset(140, 44),
+			TextWrapped = true,
+			TextSize = 13,
+			Parent = detail,
+		}
+	)
 	button.AutoButtonColor = canUnlock
 end
 

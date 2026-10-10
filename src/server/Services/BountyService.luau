@@ -37,7 +37,7 @@ local function eligibleEnemies(level, wantElite, needsDrops)
 	local list = {}
 	for enemyId, def in pairs(Enemies) do
 		local inWorld = enemyZone[enemyId] ~= nil
-		local levelOk = def.Level <= level + (wantElite and 1 or 2)
+		local levelOk = def.Level <= level + (wantElite and 0 or 1)
 		local typeOk = (def.Elite == true) == wantElite
 		local dropsOk = not needsDrops or (def.Drops and next(def.Drops) ~= nil)
 		if inWorld and levelOk and typeOk and dropsOk then
@@ -64,14 +64,18 @@ function BountyService.Generate(level, rng, rewardScale, isDaily)
 		pool = eligibleEnemies(level, false, false)
 	end
 
-	-- Prefer enemies close to the player's level: pick from the top of the pool more often.
+	-- Prefer enemies close to the player's level: pick from the two highest-level options.
 	table.sort(pool, function(a, b)
+		if Enemies[a].Level == Enemies[b].Level then
+			return a < b
+		end
 		return Enemies[a].Level > Enemies[b].Level
 	end)
-	local pick = pool[math.min(#pool, rng:NextInteger(1, math.min(#pool, 3)))]
+	local pick = pool[rng:NextInteger(1, math.min(#pool, 2))]
 	local enemy = Enemies[pick]
 
 	local count = rng:NextInteger(template.Count[1], template.Count[2])
+	local plural = enemy.Plural or Util.Pluralize(enemy.Name)
 	local objective
 	local material
 	if template.Kind == "Gather" then
@@ -84,7 +88,12 @@ function BountyService.Generate(level, rng, rewardScale, isDaily)
 		material = Items.Materials[best].Name
 		objective = { Kind = "Collect", Target = best, Count = count, Text = "Collect " .. material }
 	else
-		objective = { Kind = "Kill", Target = pick, Count = count, Text = "Defeat " .. Util.Pluralize(enemy.Name) }
+		objective = {
+			Kind = "Kill",
+			Target = pick,
+			Count = count,
+			Text = "Defeat " .. (count == 1 and enemy.Name or plural),
+		}
 	end
 
 	-- Gather rewards account for drop chance (you need more kills on average).
@@ -97,7 +106,7 @@ function BountyService.Generate(level, rng, rewardScale, isDaily)
 
 	local vars = {
 		enemy = enemy.Name,
-		enemies = Util.Pluralize(enemy.Name),
+		enemies = plural,
 		material = material,
 		zone = enemyZone[pick],
 		client = Bounties.Clients[rng:NextInteger(1, #Bounties.Clients)],

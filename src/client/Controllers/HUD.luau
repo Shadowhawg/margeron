@@ -206,9 +206,14 @@ local function buildMenu()
 		{ "Store", "B", "Store" },
 	}
 	for i, b in ipairs(buttons) do
-		local button = Create.Button(b[1] .. " (" .. b[2] .. ")", b[1] == "Store" and Theme.Robux or Theme.Panel, function()
-			Windows.Toggle(b[3])
-		end, { LayoutOrder = i, Size = UDim2.fromOffset(92, 40), TextSize = 13 })
+		local button = Create.Button(
+			b[1] .. " (" .. b[2] .. ")",
+			b[1] == "Store" and Theme.Robux or Theme.Panel,
+			function()
+				Windows.Toggle(b[3])
+			end,
+			{ LayoutOrder = i, Size = UDim2.fromOffset(92, 40), TextSize = 13 }
+		)
 		button.Parent = frame
 		if b[1] == "Skills" then
 			skillBadge = New("TextLabel", {

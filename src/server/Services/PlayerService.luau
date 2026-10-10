@@ -104,7 +104,11 @@ function PlayerService.AddXP(player, amount)
 			humanoid.Health = humanoid.MaxHealth
 			Remotes.Effect:FireAllClients("LevelUp", character)
 		end
-		PlayerService.Notify(player, "LEVEL UP! You are now level " .. newLevel .. ". New skill point available (K).", "LevelUp")
+		PlayerService.Notify(
+			player,
+			"LEVEL UP! You are now level " .. newLevel .. ". New skill point available (K).",
+			"LevelUp"
+		)
 		Services.QuestService.GrantAutomaticQuests(player)
 	end
 	PlayerService.Changed(player)
@@ -198,6 +202,5 @@ function PlayerService.Start()
 		pushQueued[player] = nil
 	end)
 end
-
 
 return PlayerService

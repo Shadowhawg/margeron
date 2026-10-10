@@ -52,10 +52,14 @@ local function floatingText(position, text, color, size, duration)
 	TweenService:Create(gui, TweenInfo.new(duration, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		StudsOffset = Vector3.new(0, 3, 0) + offset,
 	}):Play()
-	TweenService:Create(label, TweenInfo.new(duration * 0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false, duration * 0.5), {
-		TextTransparency = 1,
-		TextStrokeTransparency = 1,
-	}):Play()
+	TweenService:Create(
+		label,
+		TweenInfo.new(duration * 0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.In, 0, false, duration * 0.5),
+		{
+			TextTransparency = 1,
+			TextStrokeTransparency = 1,
+		}
+	):Play()
 	Debris:AddItem(anchor, duration + 0.1)
 end
 

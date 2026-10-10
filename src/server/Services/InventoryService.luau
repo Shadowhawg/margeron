@@ -84,7 +84,11 @@ function InventoryService.GrantCosmetic(player, cosmeticId, silent)
 	data.Cosmetics[cosmeticId] = true
 	if not silent then
 		local label = def.Slot == "Title" and "New title" or "New cosmetic"
-		Services.PlayerService.Notify(player, label .. ": " .. def.Name .. "! Equip it from your inventory (I).", "Success")
+		Services.PlayerService.Notify(
+			player,
+			label .. ": " .. def.Name .. "! Equip it from your inventory (I).",
+			"Success"
+		)
 	end
 	Services.PlayerService.Changed(player)
 end

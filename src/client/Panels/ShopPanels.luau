@@ -84,11 +84,17 @@ local function renderStore(content)
 				if item.Id == 0 then
 					label = owned and "Owned" or "Test (free)"
 				end
-				InventoryPanel.Row(list, order, item.Name, item.Description, label,
+				InventoryPanel.Row(
+					list,
+					order,
+					item.Name,
+					item.Description,
+					label,
 					owned and Theme.Border or Theme.Robux,
 					(not owned) and function()
 						buy(item, isPass)
-					end or nil)
+					end or nil
+				)
 			end
 		end
 	end
@@ -151,7 +157,13 @@ local function renderBlacksmith(content)
 				Net.Request("BuyWeapon", weaponId)
 			end or nil
 		end
-		local subtitle = def.Type .. "  ·  " .. def.Damage .. " dmg  ·  " .. def.Cooldown .. "s  ·  " .. (def.Description or "")
+		local subtitle = def.Type
+			.. "  ·  "
+			.. def.Damage
+			.. " dmg  ·  "
+			.. def.Cooldown
+			.. "s  ·  "
+			.. (def.Description or "")
 		InventoryPanel.Row(list, i, def.Name .. "  (Lv " .. def.LevelReq .. ")", subtitle, label, color, action)
 	end
 end
@@ -201,7 +213,10 @@ end
 
 local function renderBoard(content, board)
 	if not board then
-		Create.Label("The notices are unreadable from here. Walk up to the Bounty Board.", { TextColor3 = Theme.Muted, Parent = content })
+		Create.Label(
+			"The notices are unreadable from here. Walk up to the Bounty Board.",
+			{ TextColor3 = Theme.Muted, Parent = content }
+		)
 		return
 	end
 	local function apply(result)
@@ -211,11 +226,19 @@ local function renderBoard(content, board)
 	end
 	local full = board.Active >= board.MaxActive
 
-	Create.Label("Active bounties: " .. board.Active .. "/" .. board.MaxActive .. "     New notices in " .. formatTime(board.RefreshIn), {
-		TextColor3 = full and Theme.Bad or Theme.Muted,
-		Size = UDim2.new(1, -170, 0, 24),
-		Parent = content,
-	})
+	Create.Label(
+		"Active bounties: "
+			.. board.Active
+			.. "/"
+			.. board.MaxActive
+			.. "     New notices in "
+			.. formatTime(board.RefreshIn),
+		{
+			TextColor3 = full and Theme.Bad or Theme.Muted,
+			Size = UDim2.new(1, -170, 0, 24),
+			Parent = content,
+		}
+	)
 	Create.Button("Reroll (" .. board.RerollCost .. " gold)", Theme.PanelLight, function()
 		apply(Net.Request("RerollBounties"))
 	end, {
@@ -234,9 +257,16 @@ local function renderBoard(content, board)
 	})
 	local list = scrollList(holder)
 
-	bountyCard(list, 0, board.Daily, board.DailyAvailable and "Accept" or "Done today", board.DailyAvailable and not full, function()
-		apply(Net.Request("AcceptBounty", "daily"))
-	end)
+	bountyCard(
+		list,
+		0,
+		board.Daily,
+		board.DailyAvailable and "Accept" or "Done today",
+		board.DailyAvailable and not full,
+		function()
+			apply(Net.Request("AcceptBounty", "daily"))
+		end
+	)
 	for i, offer in ipairs(board.Offers) do
 		bountyCard(list, i, offer, "Accept", not full, function()
 			apply(Net.Request("AcceptBounty", i))

@@ -1,5 +1,6 @@
 -- Enemy definitions. Body is built from simple parts (swap in real models later; see docs/SETUP.md).
 --
+--   Plural       optional plural name for quest text (default: Name + "s")
 --   Shape        "Beast" (four-legged, horizontal) or "Humanoid" (upright)
 --   Scale        overall size multiplier
 --   Windup       seconds of telegraph before a basic attack lands (gives players time to dodge)
@@ -63,6 +64,7 @@ return {
 	},
 	Skeleton = {
 		Name = "Hollow Dead",
+		Plural = "Hollow Dead",
 		Level = 6,
 		Health = 115,
 		Damage = 14,

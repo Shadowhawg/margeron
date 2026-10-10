@@ -103,7 +103,10 @@ function spawnEnemy(zoneId, enemyId)
 			or (enemyId == "Skeleton" and Color3.fromRGB(120, 200, 255) or nil),
 	})
 	local ground = randomPointInZone(zoneId)
-	model:PivotTo(CFrame.new(ground + Vector3.new(0, info.GroundOffset + 0.5, 0)) * CFrame.Angles(0, math.random() * math.pi * 2, 0))
+	model:PivotTo(
+		CFrame.new(ground + Vector3.new(0, info.GroundOffset + 0.5, 0))
+			* CFrame.Angles(0, math.random() * math.pi * 2, 0)
+	)
 	model:SetAttribute("EnemyId", enemyId)
 	model.Parent = folder
 	info.Root:SetNetworkOwner(nil)
@@ -133,7 +136,11 @@ function spawnEnemy(zoneId, enemyId)
 	zoneCounts[zoneId][enemyId] = (zoneCounts[zoneId][enemyId] or 0) + 1
 	if def.Boss then
 		for _, player in ipairs(Players:GetPlayers()) do
-			Services.PlayerService.Notify(player, def.Name .. " has appeared at " .. World.Zones[zoneId].Name .. "!", "Boss")
+			Services.PlayerService.Notify(
+				player,
+				def.Name .. " has appeared at " .. World.Zones[zoneId].Name .. "!",
+				"Boss"
+			)
 		end
 	end
 	return e
@@ -226,7 +233,11 @@ local function specialAttack(e)
 	for _, player in ipairs(Players:GetPlayers()) do
 		local root = playerRoot(player)
 		if root and (root.Position - center).Magnitude < 80 then
-			Services.PlayerService.Notify(player, e.Def.Name .. " prepares " .. special.Name .. "! Get out of the red!", "Warning")
+			Services.PlayerService.Notify(
+				player,
+				e.Def.Name .. " prepares " .. special.Name .. "! Get out of the red!",
+				"Warning"
+			)
 		end
 	end
 
@@ -326,7 +337,12 @@ local function rewardPlayers(e)
 	for player in pairs(e.Damagers) do
 		local root = playerRoot(player)
 		local data = Services.PlayerService.GetData(player)
-		if player.Parent and data and root and (root.Position - e.Root.Position).Magnitude <= GameConfig.XPShareRadius then
+		if
+			player.Parent
+			and data
+			and root
+			and (root.Position - e.Root.Position).Magnitude <= GameConfig.XPShareRadius
+		then
 			local gold = math.random(def.Gold[1], def.Gold[2])
 			local parts = { "+" .. def.XP .. " XP", "+" .. gold .. " gold" }
 			data.Stats.Kills += 1
@@ -367,7 +383,11 @@ local function kill(e, killer)
 			TweenService:Create(descendant, TweenInfo.new(1.2), { Transparency = 1 }):Play()
 		end
 	end
-	TweenService:Create(e.Root, TweenInfo.new(1.2), { CFrame = e.Root.CFrame * CFrame.Angles(0, 0, math.rad(80)) - Vector3.new(0, 1, 0) }):Play()
+	TweenService:Create(
+		e.Root,
+		TweenInfo.new(1.2),
+		{ CFrame = e.Root.CFrame * CFrame.Angles(0, 0, math.rad(80)) - Vector3.new(0, 1, 0) }
+	):Play()
 	task.delay(1.5, function()
 		e.Model:Destroy()
 	end)
@@ -387,7 +407,13 @@ function EnemyService.Damage(e, amount, player, crit)
 		e.Target = player
 	end
 	setBar(e)
-	Remotes.Effect:FireClient(player, "DamageNumber", e.Root.Position + Vector3.new(0, e.Info.Height / 2, 0), amount, crit)
+	Remotes.Effect:FireClient(
+		player,
+		"DamageNumber",
+		e.Root.Position + Vector3.new(0, e.Info.Height / 2, 0),
+		amount,
+		crit
+	)
 	if e.HP <= 0 then
 		kill(e, player)
 		return amount, true

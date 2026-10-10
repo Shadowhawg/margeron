@@ -102,3 +102,15 @@ src/
 selene src     # lint (first run generates roblox.yml)
 stylua src     # format
 ```
+
+## Tests
+
+Logic tests run outside Roblox: config cross-references, skill rules, quest flow, and the bounty
+generator across all levels. Install the Luau CLI once (`rokit add luau-lang/luau`), then:
+
+```sh
+./tests/run.sh
+```
+
+Run them after editing anything in `src/shared/Config/`. They catch typos like a quest pointing
+at an enemy or NPC that doesn't exist.

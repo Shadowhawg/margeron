@@ -53,15 +53,20 @@ function show(payload)
 	Create.Clear(optionList)
 	for i, option in ipairs(payload.Options) do
 		local isQuest = option.Id:match("^quest:") or option.Id:match("^accept:")
-		Create.Button("  " .. i .. ".  " .. option.Label, isQuest and Color3.fromRGB(70, 58, 36) or Theme.PanelLight, function()
-			choose(payload.NPC, option.Id)
-		end, {
-			LayoutOrder = i,
-			Size = UDim2.new(1, 0, 0, 34),
-			TextXAlignment = Enum.TextXAlignment.Left,
-			TextColor3 = isQuest and Theme.Accent or Theme.Text,
-			Parent = optionList,
-		})
+		Create.Button(
+			"  " .. i .. ".  " .. option.Label,
+			isQuest and Color3.fromRGB(70, 58, 36) or Theme.PanelLight,
+			function()
+				choose(payload.NPC, option.Id)
+			end,
+			{
+				LayoutOrder = i,
+				Size = UDim2.new(1, 0, 0, 34),
+				TextXAlignment = Enum.TextXAlignment.Left,
+				TextColor3 = isQuest and Theme.Accent or Theme.Text,
+				Parent = optionList,
+			}
+		)
 	end
 	frame.Visible = true
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")

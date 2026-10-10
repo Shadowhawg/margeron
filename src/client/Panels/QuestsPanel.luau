@@ -72,10 +72,18 @@ local function render(content)
 
 	local stats = data.Stats
 	if not selected then
-		Create.Label("Quests completed: " .. stats.QuestsCompleted .. "\nBounties completed: " .. data.Bounties.Completed .. "\nRenown: " .. data.Renown, {
-			AutomaticSize = Enum.AutomaticSize.Y,
-			Parent = detail,
-		})
+		Create.Label(
+			"Quests completed: "
+				.. stats.QuestsCompleted
+				.. "\nBounties completed: "
+				.. data.Bounties.Completed
+				.. "\nRenown: "
+				.. data.Renown,
+			{
+				AutomaticSize = Enum.AutomaticSize.Y,
+				Parent = detail,
+			}
+		)
 		return
 	end
 

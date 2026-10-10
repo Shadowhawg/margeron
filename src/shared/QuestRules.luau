@@ -6,7 +6,7 @@ local QuestRules = {}
 
 -- Static quests live in Config/Quests; bounties carry their definition in the save data.
 function QuestRules.GetDef(data, key)
-	return Quests[key] or (data.Bounties.Defs[key])
+	return Quests[key] or data.Bounties.Defs[key]
 end
 
 function QuestRules.GetProgress(data, key, index)

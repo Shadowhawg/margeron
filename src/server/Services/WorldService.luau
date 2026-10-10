@@ -94,8 +94,20 @@ end
 local function house(position, rotation, wallColor)
 	local base = CFrame.new(position) * CFrame.Angles(0, math.rad(rotation), 0)
 	local w, d, h = 16, 14, 10
-	prop({ Name = "Walls", Size = Vector3.new(w, h, d), CFrame = base * CFrame.new(0, h / 2, 0), Color = wallColor, Material = Enum.Material.WoodPlanks })
-	prop({ Name = "Door", Size = Vector3.new(4, 7, 0.4), CFrame = base * CFrame.new(0, 3.5, -d / 2 - 0.1), Color = Color3.fromRGB(60, 40, 25), Material = Enum.Material.Wood })
+	prop({
+		Name = "Walls",
+		Size = Vector3.new(w, h, d),
+		CFrame = base * CFrame.new(0, h / 2, 0),
+		Color = wallColor,
+		Material = Enum.Material.WoodPlanks,
+	})
+	prop({
+		Name = "Door",
+		Size = Vector3.new(4, 7, 0.4),
+		CFrame = base * CFrame.new(0, 3.5, -d / 2 - 0.1),
+		Color = Color3.fromRGB(60, 40, 25),
+		Material = Enum.Material.Wood,
+	})
 	for side = -1, 1, 2 do
 		prop({
 			Name = "Roof",
@@ -109,8 +121,21 @@ end
 
 local function torch(position)
 	local ground = WorldService.GroundAt(position)
-	prop({ Name = "Post", Size = Vector3.new(0.5, 6, 0.5), Position = ground + Vector3.new(0, 3, 0), Color = Color3.fromRGB(70, 50, 35), Material = Enum.Material.Wood })
-	local flame = prop({ Name = "Flame", Size = Vector3.new(0.8, 0.8, 0.8), Position = ground + Vector3.new(0, 6.4, 0), Color = Color3.fromRGB(255, 160, 60), Material = Enum.Material.Neon, CanCollide = false })
+	prop({
+		Name = "Post",
+		Size = Vector3.new(0.5, 6, 0.5),
+		Position = ground + Vector3.new(0, 3, 0),
+		Color = Color3.fromRGB(70, 50, 35),
+		Material = Enum.Material.Wood,
+	})
+	local flame = prop({
+		Name = "Flame",
+		Size = Vector3.new(0.8, 0.8, 0.8),
+		Position = ground + Vector3.new(0, 6.4, 0),
+		Color = Color3.fromRGB(255, 160, 60),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+	})
 	local light = Instance.new("PointLight")
 	light.Color = Color3.fromRGB(255, 170, 90)
 	light.Range = 20
@@ -124,7 +149,12 @@ end
 
 local function buildTown()
 	local town = World.Town
-	terrain:FillCylinder(CFrame.new(town.Position + Vector3.new(0, -2, 0)), 4.2, town.Radius * 0.55, Enum.Material.Cobblestone)
+	terrain:FillCylinder(
+		CFrame.new(town.Position + Vector3.new(0, -2, 0)),
+		4.2,
+		town.Radius * 0.55,
+		Enum.Material.Cobblestone
+	)
 	for i = 0, 7 do
 		local angle = i / 8 * math.pi * 2 + 0.3
 		local pos = town.Position + Vector3.new(math.cos(angle), 0, math.sin(angle)) * (town.Radius * 0.75)
@@ -137,9 +167,21 @@ local function buildTown()
 	end
 	-- Forge next to the blacksmith
 	local forge = WorldService.GetNPCPosition("Blacksmith") + Vector3.new(6, 0, -4)
-	prop({ Name = "Forge", Size = Vector3.new(5, 3.5, 5), Position = WorldService.GroundAt(forge) + Vector3.new(0, 1.75, 0), Color = Color3.fromRGB(80, 75, 75), Material = Enum.Material.Brick })
+	prop({
+		Name = "Forge",
+		Size = Vector3.new(5, 3.5, 5),
+		Position = WorldService.GroundAt(forge) + Vector3.new(0, 1.75, 0),
+		Color = Color3.fromRGB(80, 75, 75),
+		Material = Enum.Material.Brick,
+	})
 	torch(forge + Vector3.new(0, 0, 0.1))
-	prop({ Name = "Anvil", Size = Vector3.new(2.5, 1.5, 1.2), Position = WorldService.GroundAt(forge + Vector3.new(-5, 0, 2)) + Vector3.new(0, 0.75, 0), Color = Color3.fromRGB(50, 50, 55), Material = Enum.Material.Metal })
+	prop({
+		Name = "Anvil",
+		Size = Vector3.new(2.5, 1.5, 1.2),
+		Position = WorldService.GroundAt(forge + Vector3.new(-5, 0, 2)) + Vector3.new(0, 0.75, 0),
+		Color = Color3.fromRGB(50, 50, 55),
+		Material = Enum.Material.Metal,
+	})
 end
 
 local function buildZone(zoneId, zone)
@@ -150,14 +192,25 @@ local function buildZone(zoneId, zone)
 		for _ = 1, 45 do
 			local r = math.sqrt(rng:NextNumber()) * zone.Radius * 1.1
 			local a = rng:NextNumber(0, math.pi * 2)
-			tree(center + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r), rng:NextNumber(0.9, 1.5), Color3.fromRGB(45, 90, 50))
+			tree(
+				center + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r),
+				rng:NextNumber(0.9, 1.5),
+				Color3.fromRGB(45, 90, 50)
+			)
 		end
 	elseif zoneId == "BanditCamp" then
 		for i = 0, 23 do
 			local a = i / 24 * math.pi * 2
 			if i ~= 0 and i ~= 1 then -- leave a gap for the gate
-				local pos = WorldService.GroundAt(center + Vector3.new(math.cos(a), 0, math.sin(a)) * zone.Radius * 0.85)
-				prop({ Name = "Palisade", Size = Vector3.new(2, 12, 2), Position = pos + Vector3.new(0, 5, 0), Color = Color3.fromRGB(100, 70, 45), Material = Enum.Material.Wood })
+				local pos =
+					WorldService.GroundAt(center + Vector3.new(math.cos(a), 0, math.sin(a)) * zone.Radius * 0.85)
+				prop({
+					Name = "Palisade",
+					Size = Vector3.new(2, 12, 2),
+					Position = pos + Vector3.new(0, 5, 0),
+					Color = Color3.fromRGB(100, 70, 45),
+					Material = Enum.Material.Wood,
+				})
 			end
 		end
 		for i = 0, 4 do
@@ -180,34 +233,74 @@ local function buildZone(zoneId, zone)
 		for i = 0, 9 do
 			local a = i / 10 * math.pi * 2
 			local pos = WorldService.GroundAt(center + Vector3.new(math.cos(a), 0, math.sin(a)) * zone.Radius * 0.7)
-			prop({ Name = "Pillar", Size = Vector3.new(3, 16, 3), Position = pos + Vector3.new(0, 7, 0), Color = Color3.fromRGB(90, 90, 95), Material = Enum.Material.Slate })
+			prop({
+				Name = "Pillar",
+				Size = Vector3.new(3, 16, 3),
+				Position = pos + Vector3.new(0, 7, 0),
+				Color = Color3.fromRGB(90, 90, 95),
+				Material = Enum.Material.Slate,
+			})
 		end
 		local ground = WorldService.GroundAt(center)
-		prop({ Name = "CryptEntrance", Size = Vector3.new(20, 12, 10), Position = ground + Vector3.new(0, 6, -zone.Radius * 0.4), Color = Color3.fromRGB(70, 70, 75), Material = Enum.Material.Slate })
-		prop({ Name = "CryptDoor", Size = Vector3.new(6, 8, 0.5), Position = ground + Vector3.new(0, 4, -zone.Radius * 0.4 + 5.1), Color = Color3.new(0, 0, 0), Material = Enum.Material.Slate })
+		prop({
+			Name = "CryptEntrance",
+			Size = Vector3.new(20, 12, 10),
+			Position = ground + Vector3.new(0, 6, -zone.Radius * 0.4),
+			Color = Color3.fromRGB(70, 70, 75),
+			Material = Enum.Material.Slate,
+		})
+		prop({
+			Name = "CryptDoor",
+			Size = Vector3.new(6, 8, 0.5),
+			Position = ground + Vector3.new(0, 4, -zone.Radius * 0.4 + 5.1),
+			Color = Color3.new(0, 0, 0),
+			Material = Enum.Material.Slate,
+		})
 		for _ = 1, 12 do
 			local a = rng:NextNumber(0, math.pi * 2)
 			local r = rng:NextNumber(10, zone.Radius * 0.9)
-			prop({ Name = "Gravestone", Size = Vector3.new(2.5, 3.5, 0.6), Position = WorldService.GroundAt(center + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r)) + Vector3.new(0, 1.5, 0), Color = Color3.fromRGB(120, 120, 125), Material = Enum.Material.Slate })
+			prop({
+				Name = "Gravestone",
+				Size = Vector3.new(2.5, 3.5, 0.6),
+				Position = WorldService.GroundAt(center + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r))
+					+ Vector3.new(0, 1.5, 0),
+				Color = Color3.fromRGB(120, 120, 125),
+				Material = Enum.Material.Slate,
+			})
 		end
 	elseif zoneId == "CinderPeak" then
 		for i = 0, 11 do
 			local a = i / 12 * math.pi * 2
 			local h = rng:NextNumber(18, 34)
 			local pos = WorldService.GroundAt(center + Vector3.new(math.cos(a), 0, math.sin(a)) * zone.Radius * 1.05)
-			prop({ Name = "Spire", Size = Vector3.new(7, h, 7), CFrame = CFrame.new(pos + Vector3.new(0, h / 2 - 1, 0)) * CFrame.Angles(0, a, rng:NextNumber(-0.15, 0.15)), Color = Color3.fromRGB(45, 40, 40), Material = Enum.Material.Basalt })
+			prop({
+				Name = "Spire",
+				Size = Vector3.new(7, h, 7),
+				CFrame = CFrame.new(pos + Vector3.new(0, h / 2 - 1, 0))
+					* CFrame.Angles(0, a, rng:NextNumber(-0.15, 0.15)),
+				Color = Color3.fromRGB(45, 40, 40),
+				Material = Enum.Material.Basalt,
+			})
 		end
 		terrain:FillCylinder(CFrame.new(center + Vector3.new(0, -1.9, 0)), 4, 10, Enum.Material.CrackedLava)
 	elseif zoneId == "FrostHollow" then
 		for _ = 1, 25 do
 			local r = math.sqrt(rng:NextNumber()) * zone.Radius
 			local a = rng:NextNumber(0, math.pi * 2)
-			tree(center + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r), rng:NextNumber(1, 1.6), Color3.fromRGB(220, 235, 240))
+			tree(
+				center + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r),
+				rng:NextNumber(1, 1.6),
+				Color3.fromRGB(220, 235, 240)
+			)
 		end
 		for _ = 1, 10 do
 			local a = rng:NextNumber(0, math.pi * 2)
 			local r = rng:NextNumber(10, zone.Radius)
-			rock(center + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r), Vector3.new(rng:NextNumber(4, 9), rng:NextNumber(3, 6), rng:NextNumber(4, 9)), Color3.fromRGB(170, 190, 200))
+			rock(
+				center + Vector3.new(math.cos(a) * r, 0, math.sin(a) * r),
+				Vector3.new(rng:NextNumber(4, 9), rng:NextNumber(3, 6), rng:NextNumber(4, 9)),
+				Color3.fromRGB(170, 190, 200)
+			)
 		end
 	end
 
@@ -215,8 +308,20 @@ local function buildZone(zoneId, zone)
 	local toTown = (World.Town.Position - center)
 	toTown = Vector3.new(toTown.X, 0, toTown.Z).Unit
 	local signPos = WorldService.GroundAt(center + toTown * (zone.Radius + 8))
-	prop({ Name = "SignPost", Size = Vector3.new(0.6, 6, 0.6), Position = signPos + Vector3.new(0, 3, 0), Color = Color3.fromRGB(90, 65, 45), Material = Enum.Material.Wood })
-	local board = prop({ Name = "Sign", Size = Vector3.new(7, 2, 0.4), CFrame = CFrame.lookAt(signPos + Vector3.new(0, 5.5, 0), signPos + Vector3.new(0, 5.5, 0) + toTown), Color = Color3.fromRGB(120, 90, 60), Material = Enum.Material.WoodPlanks })
+	prop({
+		Name = "SignPost",
+		Size = Vector3.new(0.6, 6, 0.6),
+		Position = signPos + Vector3.new(0, 3, 0),
+		Color = Color3.fromRGB(90, 65, 45),
+		Material = Enum.Material.Wood,
+	})
+	local board = prop({
+		Name = "Sign",
+		Size = Vector3.new(7, 2, 0.4),
+		CFrame = CFrame.lookAt(signPos + Vector3.new(0, 5.5, 0), signPos + Vector3.new(0, 5.5, 0) + toTown),
+		Color = Color3.fromRGB(120, 90, 60),
+		Material = Enum.Material.WoodPlanks,
+	})
 	local gui = Instance.new("SurfaceGui")
 	gui.Face = Enum.NormalId.Front
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
@@ -250,7 +355,13 @@ local function buildTerrain()
 	terrain:FillBlock(CFrame.new(0, -6, 0), Vector3.new(size, 12, size), Enum.Material.Grass)
 	-- River south of town
 	terrain:FillBlock(CFrame.new(0, -3, 95), Vector3.new(size, 6, 18), Enum.Material.Water)
-	prop({ Name = "Bridge", Size = Vector3.new(14, 1, 26), Position = Vector3.new(0, 0.3, 95), Color = Color3.fromRGB(110, 80, 55), Material = Enum.Material.WoodPlanks })
+	prop({
+		Name = "Bridge",
+		Size = Vector3.new(14, 1, 26),
+		Position = Vector3.new(0, 0.3, 95),
+		Color = Color3.fromRGB(110, 80, 55),
+		Material = Enum.Material.WoodPlanks,
+	})
 	-- Mountains around the edge keep players inside the map.
 	local edge = size / 2
 	for i = 0, 63 do

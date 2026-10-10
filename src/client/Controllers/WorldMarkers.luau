@@ -200,7 +200,11 @@ function WorldMarkers.Start()
 				local position, label, arriveRadius = waypointTarget(data)
 				if position and Util.FlatDistance(root.Position, position) > arriveRadius then
 					waypointPart.Position = position + Vector3.new(0, 10, 0)
-					waypointLabel.Text = "◆ " .. label .. "\n" .. math.floor(Util.FlatDistance(root.Position, position)) .. "m"
+					waypointLabel.Text = "◆ "
+						.. label
+						.. "\n"
+						.. math.floor(Util.FlatDistance(root.Position, position))
+						.. "m"
 					waypointLabel.Visible = true
 				else
 					waypointLabel.Visible = false

@@ -94,13 +94,18 @@ local function render(content)
 				order += 1
 				local equipped = data.EquippedWeapon == weaponId
 				local canEquip = data.Level >= (def.LevelReq or 1)
-				InventoryPanel.Row(list, order, def.Name, weaponStats(def),
+				InventoryPanel.Row(
+					list,
+					order,
+					def.Name,
+					weaponStats(def),
 					equipped and "Equipped" or (canEquip and "Equip" or "Lv " .. def.LevelReq),
 					equipped and Theme.Border or (canEquip and Theme.Good or Theme.PanelLight),
 					(not equipped and canEquip) and function()
-						Net.Request("EquipWeapon", weaponId)
-					end or nil,
-					def.Premium and Theme.Robux or nil)
+							Net.Request("EquipWeapon", weaponId)
+						end or nil,
+					def.Premium and Theme.Robux or nil
+				)
 			end
 		end
 	elseif tab == "Cosmetics" then
@@ -108,12 +113,17 @@ local function render(content)
 			if data.Cosmetics[cosmeticId] then
 				order += 1
 				local equipped = data.Equipped[def.Slot] == cosmeticId
-				InventoryPanel.Row(list, order, def.Name, def.Slot,
+				InventoryPanel.Row(
+					list,
+					order,
+					def.Name,
+					def.Slot,
 					equipped and "Unequip" or "Equip",
 					equipped and Theme.Border or Theme.Good,
 					function()
 						Net.Request("EquipCosmetic", cosmeticId)
-					end)
+					end
+				)
 			end
 		end
 		if order == 0 then
@@ -165,9 +175,15 @@ local function render(content)
 		{ "Enemies Slain", data.Stats.Kills },
 	}
 	for i, line in ipairs(lines) do
-		local row = New("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 22), LayoutOrder = i + 1, Parent = sheet })
+		local row = New(
+			"Frame",
+			{ BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 22), LayoutOrder = i + 1, Parent = sheet }
+		)
 		Create.Label(line[1], { TextColor3 = Theme.Muted, TextSize = 14, Parent = row })
-		Create.Label(tostring(line[2]), { TextXAlignment = Enum.TextXAlignment.Right, Font = Theme.BoldFont, TextSize = 14, Parent = row })
+		Create.Label(
+			tostring(line[2]),
+			{ TextXAlignment = Enum.TextXAlignment.Right, Font = Theme.BoldFont, TextSize = 14, Parent = row }
+		)
 	end
 end
 

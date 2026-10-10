@@ -98,7 +98,11 @@ function QuestService.OnEnemyKilled(player, enemyId)
 		local def = QuestRules.GetDef(data, key)
 		if def then
 			for i, objective in ipairs(def.Objectives) do
-				if objective.Kind == "Kill" and objective.Target == enemyId and active.Progress[i] < objective.Count then
+				if
+					objective.Kind == "Kill"
+					and objective.Target == enemyId
+					and active.Progress[i] < objective.Count
+				then
 					active.Progress[i] += 1
 					changed = true
 					local enemyName = Enemies[enemyId] and Enemies[enemyId].Name or enemyId

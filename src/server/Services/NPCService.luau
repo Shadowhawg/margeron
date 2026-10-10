@@ -34,7 +34,10 @@ local function buildBoard(npcId, npc, folder)
 	local board = ModelBuilder.Part({
 		Name = "Board",
 		Size = Vector3.new(8, 5, 0.4),
-		CFrame = CFrame.lookAt(ground + Vector3.new(0, 5, 0), ground + Vector3.new(0, 5, 0) + (World.Town.Position - ground) * Vector3.new(1, 0, 1)),
+		CFrame = CFrame.lookAt(
+			ground + Vector3.new(0, 5, 0),
+			ground + Vector3.new(0, 5, 0) + (World.Town.Position - ground) * Vector3.new(1, 0, 1)
+		),
 		Color = Color3.fromRGB(130, 95, 60),
 		Material = Enum.Material.WoodPlanks,
 		Anchored = true,
@@ -44,7 +47,9 @@ local function buildBoard(npcId, npc, folder)
 		local paper = ModelBuilder.Part({
 			Name = "Notice",
 			Size = Vector3.new(1.4, 1.8, 0.05),
-			CFrame = board.CFrame * CFrame.new(-2.8 + (i - 1) * 1.4, (i % 2) * 0.8 - 0.3, -0.25) * CFrame.Angles(0, 0, math.rad((i * 7) % 11 - 5)),
+			CFrame = board.CFrame
+				* CFrame.new(-2.8 + (i - 1) * 1.4, (i % 2) * 0.8 - 0.3, -0.25)
+				* CFrame.Angles(0, 0, math.rad((i * 7) % 11 - 5)),
 			Color = Color3.fromRGB(235, 225, 195),
 			Material = Enum.Material.SmoothPlastic,
 			Anchored = true,
@@ -73,7 +78,13 @@ local function buildPerson(npcId, npc, folder)
 	local rootPos = ground + Vector3.new(0, info.GroundOffset, 0)
 	model:PivotTo(CFrame.lookAt(rootPos, Vector3.new(facing.X, rootPos.Y, facing.Z)))
 	model.Parent = folder
-	ModelBuilder.NameTag(info.Root, info.Height - info.GroundOffset + 1.8, npc.Name, npc.Role, Color3.fromRGB(255, 255, 255))
+	ModelBuilder.NameTag(
+		info.Root,
+		info.Height - info.GroundOffset + 1.8,
+		npc.Name,
+		npc.Role,
+		Color3.fromRGB(255, 255, 255)
+	)
 	return info.Root
 end
 
@@ -169,7 +180,13 @@ function NPCService.Choose(player, npcId, optionId)
 			text ..= "\n\n(" .. reason .. ")"
 		end
 		return {
-			dialogue = { NPC = npcId, Name = World.NPCs[npcId].Name, Role = World.NPCs[npcId].Role, Text = text, Options = options },
+			dialogue = {
+				NPC = npcId,
+				Name = World.NPCs[npcId].Name,
+				Role = World.NPCs[npcId].Role,
+				Text = text,
+				Options = options,
+			},
 		}
 	end
 

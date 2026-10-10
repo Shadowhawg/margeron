@@ -46,7 +46,8 @@ function Notifications.Show(text, kind)
 		Parent = stack,
 	}, { Create.Corner(6), Create.Padding(8) })
 	task.delay(isSmall and 2 or 4.5, function()
-		local tween = TweenService:Create(toast, TweenInfo.new(0.4), { TextTransparency = 1, BackgroundTransparency = 1 })
+		local tween =
+			TweenService:Create(toast, TweenInfo.new(0.4), { TextTransparency = 1, BackgroundTransparency = 1 })
 		tween:Play()
 		tween.Completed:Wait()
 		toast:Destroy()
