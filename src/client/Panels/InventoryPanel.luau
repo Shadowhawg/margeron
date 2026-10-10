@@ -5,6 +5,9 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Items = require(Shared.Config.Items)
 local Crafting = require(Shared.Config.Crafting)
 local Races = require(Shared.Config.Races)
+local Property = require(Shared.Config.Property)
+local Products = require(Shared.Config.Products)
+local Stats = require(Shared.Stats)
 local CraftingRules = require(Shared.CraftingRules)
 local Create = require(script.Parent.Parent.UI.Create)
 local Theme = require(script.Parent.Parent.UI.Theme)
@@ -73,11 +76,17 @@ local function render(content)
 		Size = UDim2.new(0.62, 0, 0, 34),
 		Parent = content,
 	}, { Create.List(6, Enum.FillDirection.Horizontal) })
-	for i, name in ipairs({ "Weapons", "Cosmetics", "Materials", "Potions & Food" }) do
+	local tabNames = { "Weapons", "Cosmetics", "Materials", "Potions & Food", "Mounts & Perks" }
+	for i, name in ipairs(tabNames) do
 		Create.Button(name, tab == name and Theme.Border or Theme.PanelLight, function()
 			tab = name
 			Windows.Render()
-		end, { LayoutOrder = i, Parent = tabs })
+		end, {
+			LayoutOrder = i,
+			Size = UDim2.new(1 / #tabNames, -5, 1, 0),
+			TextScaled = true,
+			Parent = tabs,
+		})
 	end
 
 	local list = New("ScrollingFrame", {
@@ -170,6 +179,53 @@ local function render(content)
 				{ TextColor3 = Theme.Muted, AutomaticSize = Enum.AutomaticSize.Y, Parent = list }
 			)
 		end
+	elseif tab == "Mounts & Perks" then
+		local horses = data.Property and data.Property.Horses or {}
+		for _, horseId in ipairs(Property.Horses.Order) do
+			if horses[horseId] then
+				order += 1
+				local def = Property.Horses[horseId]
+				local active = data.Property.ActiveHorse == horseId
+				InventoryPanel.Row(
+					list,
+					order,
+					def.Name,
+					"Horse · press H to ride",
+					active and "Riding this" or "Choose",
+					active and Theme.Border or Theme.Good,
+					(not active) and function()
+						Net.Request("SetHorse", horseId)
+					end or nil
+				)
+			end
+		end
+		for _, pass in ipairs(Products.GamePasses) do
+			local flag = pass.Grant.Pass
+			if flag and data.Passes and data.Passes[flag] then
+				order += 1
+				InventoryPanel.Row(list, order, pass.Name, pass.Description, "Active", Theme.Border, nil, Theme.Robux)
+			end
+		end
+		local boostLeft = (data.CraftBoostUntil or 0) - Stats.Now()
+		if boostLeft > 0 then
+			order += 1
+			InventoryPanel.Row(
+				list,
+				order,
+				"Artisan's Focus",
+				"Double crafting XP, chance of double output",
+				math.ceil(boostLeft / 60) .. " min left",
+				Theme.Border,
+				nil,
+				Theme.Robux
+			)
+		end
+		if order == 0 then
+			Create.Label(
+				"No horses or perks yet. Buy a horse at the stable in Riverwatch, or visit the Store (B).",
+				{ TextColor3 = Theme.Muted, AutomaticSize = Enum.AutomaticSize.Y, Parent = list }
+			)
+		end
 	else
 		local keys = {}
 		for key in pairs(data.Consumables) do
@@ -242,6 +298,12 @@ local function render(content)
 			{ TextXAlignment = Enum.TextXAlignment.Right, Font = Theme.BoldFont, TextSize = 14, Parent = row }
 		)
 	end
+end
+
+-- Open the inventory on a given tab (the store uses this to show what you just bought).
+function InventoryPanel.Show(tabName)
+	tab = tabName
+	Windows.Open("Inventory")
 end
 
 function InventoryPanel.Init()

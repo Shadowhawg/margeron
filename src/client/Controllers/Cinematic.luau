@@ -67,7 +67,8 @@ function Cinematic.Enter(options)
 	end
 end
 
-function Cinematic.Exit()
+function Cinematic.Exit(options)
+	options = options or {}
 	Cinematic.Active = false
 	lineId += 1
 	speakerLabel.Text = ""
@@ -76,11 +77,13 @@ function Cinematic.Exit()
 	TweenService:Create(topBar, TweenInfo.new(0.4), { Size = UDim2.fromScale(1, 0) }):Play()
 	local t = TweenService:Create(bottomBar, TweenInfo.new(0.4), { Size = UDim2.fromScale(1, 0) })
 	t:Play()
-	Cinematic.RestoreCamera()
+	if not options.KeepCamera then
+		Cinematic.RestoreCamera()
+	end
 	setControls(true)
 	setOtherGuis(true)
 	task.delay(0.45, function()
-		if not Cinematic.Active then
+		if not Cinematic.Active and not Cinematic.Holding then
 			gui.Enabled = false
 		end
 	end)
@@ -93,6 +96,23 @@ function Cinematic.RestoreCamera()
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		camera.CameraSubject = humanoid
+	end
+end
+
+-- Cover the screen in black right now (used to hide the hand-off between two scenes).
+function Cinematic.HoldBlack()
+	Cinematic.Holding = true
+	gui.Enabled = true
+	fade.BackgroundTransparency = 0
+end
+
+-- Fade in from a held black screen.
+function Cinematic.ReleaseBlack(duration)
+	Cinematic.Holding = false
+	gui.Enabled = true
+	Cinematic.Fade(false, duration or 0.8)
+	if not Cinematic.Active then
+		gui.Enabled = false
 	end
 end
 
@@ -238,7 +258,10 @@ local function titleCardShow(title, subtitle)
 end
 
 -- Plays a cutscene from Config/Story. Yields until it finishes (or is skipped).
-function Cinematic.Play(cutsceneId)
+-- options.HoldBlack: end on a black screen with the camera untouched, so the caller can set up
+-- the next scene unseen and call ReleaseBlack() (no flash of the world in between).
+function Cinematic.Play(cutsceneId, options)
+	options = options or {}
 	local cutscene = Story.Cutscenes[cutsceneId]
 	if not cutscene or Cinematic.Playing then
 		return
@@ -247,6 +270,7 @@ function Cinematic.Play(cutsceneId)
 	Cinematic.CurrentMusic = cutscene.Music
 	skipRequested = false
 	fade.BackgroundTransparency = 0
+	Cinematic.Holding = true
 	Cinematic.Enter({ Skippable = true })
 
 	if cutscene.Title then
@@ -289,6 +313,12 @@ function Cinematic.Play(cutsceneId)
 	-- Release the camera BEFORE exiting: the RenderStepped guard below re-takes it while Playing is true.
 	Cinematic.Playing = false
 	Cinematic.CurrentMusic = nil
+	if options.HoldBlack then
+		Cinematic.HoldBlack()
+		Cinematic.Exit({ KeepCamera = true })
+		return
+	end
+	Cinematic.Holding = false
 	Cinematic.Exit()
 	Cinematic.Fade(false, 0.8)
 end
@@ -424,7 +454,7 @@ function Cinematic.Init()
 	-- A new character always gets a normal follow camera (unless a cutscene is running).
 	player.CharacterAdded:Connect(function(character)
 		character:WaitForChild("Humanoid")
-		if not Cinematic.Active then
+		if not Cinematic.Active and not Cinematic.Holding then
 			Cinematic.RestoreCamera()
 		end
 	end)

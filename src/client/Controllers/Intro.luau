@@ -9,6 +9,7 @@ local Net = require(script.Parent.Net)
 local Cinematic = require(script.Parent.Cinematic)
 local Creator = require(script.Parent.Parent.Panels.Creator)
 local DayNight = require(script.Parent.DayNight)
+local Loading = require(script.Parent.Loading)
 
 local player = Players.LocalPlayer
 
@@ -26,12 +27,17 @@ local function run()
 	-- The story opens at night, whatever the server's clock says.
 	DayNight.Override = 22.5
 	waitForCharacter()
+	-- Cover the screen before the loading screen lifts, so the world never flashes in between.
+	Cinematic.HoldBlack()
+	Loading.Release()
 	local data = State.Data
 	if not data.Appearance.Created then
-		Cinematic.Play("Prologue")
+		Cinematic.Play("Prologue", { HoldBlack = true })
 		Creator.Open(true)
+		task.wait(0.2)
+		Cinematic.ReleaseBlack(1)
 		Creator.Confirmed:Wait()
-		task.wait(1.5) -- let the final look apply
+		task.wait(1.5) -- let the final look apply (under the black screen)
 	end
 	Cinematic.Play("Awakening")
 	local result = Net.Request("FinishIntro")

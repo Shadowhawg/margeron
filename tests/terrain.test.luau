@@ -56,7 +56,24 @@ local function above(pos, label)
 	check(h > World.WaterLevel + 1, label .. " is on dry land (h=" .. string.format("%.1f", h) .. ")")
 	return h
 end
-check(math.abs(TerrainGen.HeightAt(0, 0) - 4) < 0.5, "town is flat at 4")
+-- Riverwatch is level, but the land around it is not.
+for _, offset in ipairs({ Vector3.new(0, 0, 0), Vector3.new(60, 0, 0), Vector3.new(-50, 0, 40), Vector3.new(0, 0, -80) }) do
+	check(math.abs(TerrainGen.HeightAt(offset.X, offset.Z) - TerrainGen.TownHeight) < 1.5, "town is level")
+end
+-- The world has real elevation: measure the spread of heights across the map.
+local lowest, highest, samples, steep = math.huge, -math.huge, 0, 0
+for x = -1400, 1400, 100 do
+	for z = -1400, 1400, 100 do
+		local h = TerrainGen.HeightAt(x, z)
+		lowest, highest = math.min(lowest, h), math.max(highest, h)
+		if math.abs(TerrainGen.HeightAt(x + 8, z) - h) > 6 then
+			steep += 1
+		end
+		samples += 1
+	end
+end
+print(string.format("Interior heights: %.0f to %.0f studs, %d%% steep samples", lowest, highest, steep * 100 / samples))
+check(highest - math.max(lowest, 0) > 180, "interior has at least 180 studs of relief")
 above(World.SpawnPoint, "spawn point")
 above(World.IntroPoint, "intro riverbank")
 for npcId, npc in pairs(World.NPCs) do

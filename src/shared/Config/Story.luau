@@ -41,8 +41,8 @@ Story.Cutscenes = {
 				},
 			},
 			{
-				From = { Pos = Vector3.new(300, 90, -300), Look = Vector3.new(1180, 120, -1180) },
-				To = { Pos = Vector3.new(420, 110, -420), Look = Vector3.new(1180, 150, -1180) },
+				From = { Pos = Vector3.new(300, 90, -300), Look = Vector3.new(1180, 20, -1180) },
+				To = { Pos = Vector3.new(420, 110, -420), Look = Vector3.new(1180, 40, -1180) },
 				Duration = 9,
 				Lines = {
 					{ Speaker = VOICE, Text = "Look east. Do you see the glow on the peak? That's not the sunrise." },
@@ -201,8 +201,8 @@ Story.Cutscenes = {
 				Lines = { { Speaker = VOICE, Text = "I remember now. Some of it. Enough." } },
 			},
 			{
-				From = { Pos = Vector3.new(800, 120, -800), Look = Vector3.new(1180, 150, -1180) },
-				To = { Pos = Vector3.new(950, 140, -950), Look = Vector3.new(1180, 160, -1180) },
+				From = { Pos = Vector3.new(800, 120, -800), Look = Vector3.new(1180, 20, -1180) },
+				To = { Pos = Vector3.new(950, 120, -950), Look = Vector3.new(1180, 40, -1180) },
 				Duration = 16,
 				Lines = {
 					{ Speaker = VOICE, Text = "The dead in that crypt were soldiers. Your soldiers. The Ashen Guard." },
@@ -249,7 +249,7 @@ Story.Cutscenes = {
 					{ Speaker = VOICE, Text = "Oathbreaker. That's what they called you. Not 'hero'. Not 'Warden'." },
 					{
 						Speaker = VOICE,
-						Text = "We broke something on that mountain. I don't know what yet. But the seal is cracking, and the Mother is dreaming of you.",
+						Text = "She thinks you broke the oath. You didn't. Corvin did. But the seal is cracking all the same, and the Mother is dreaming of you.",
 					},
 					{
 						Speaker = VOICE,
@@ -257,6 +257,101 @@ Story.Cutscenes = {
 					},
 					{ Speaker = VOICE, Text = "When she wakes, I want her to find someone worth fearing." },
 					{ Speaker = VOICE, Text = "We'll find out the rest together. I'm not going anywhere." },
+				},
+			},
+		},
+	},
+
+	EchoOath = {
+		Title = "Echo",
+		Subtitle = "The Night Before",
+		Music = "Echo",
+		Shots = {
+			{
+				From = { Pos = Vector3.new(-470, 30, -580), Look = Vector3.new(-520, 4, -640) },
+				To = { Pos = Vector3.new(-495, 14, -605), Look = Vector3.new(-520, 3, -640) },
+				Duration = 12,
+				Lines = {
+					{
+						Speaker = VOICE,
+						Text = "I remember this place. Seven of us, knee-deep in the lake, carving our names by torchlight.",
+					},
+					{
+						Speaker = VOICE,
+						Text = "Corvin went last. His hand shook so badly the knife slipped. We laughed at him.",
+					},
+					{
+						Speaker = VOICE,
+						Text = "We shouldn't have laughed. He was the only one of us who understood what we were agreeing to.",
+					},
+				},
+			},
+			{
+				Black = true,
+				Duration = 6,
+				Lines = {
+					{ Speaker = VOICE, Text = "On the mountain, when the moment came, he wasn't beside us. He'd run." },
+					{
+						Speaker = VOICE,
+						Text = "So you gave more than your share. You gave his share too. That's why there's so little of you left, {name}.",
+					},
+				},
+			},
+		},
+	},
+
+	Echo6 = {
+		Title = "Echo VI",
+		Subtitle = "What You Choose to Keep",
+		Music = "Echo",
+		Shots = {
+			{
+				From = { Pos = Vector3.new(1110, 30, -1090), Look = Vector3.new(1180, 6, -1180) },
+				To = { Pos = Vector3.new(1140, 20, -1130), Look = Vector3.new(1180, 4, -1180) },
+				Duration = 10,
+				Lines = {
+					{
+						Speaker = "Corvin",
+						Text = "Six of them are still in there. Still screaming. Every night for nine years I've heard them.",
+					},
+					{ Speaker = "Corvin", Text = "I only wanted to let them out. Is that so terrible?" },
+					{ Speaker = "Corvin", Text = "...Tell Aurelia I'm sorry. Tell her I never stopped being afraid." },
+				},
+			},
+			{
+				From = {
+					Pos = { Anchor = "Player", Offset = Vector3.new(0, 5, -10) },
+					Look = { Anchor = "Player", Offset = Vector3.new(0, 1.5, 0) },
+				},
+				To = {
+					Pos = { Anchor = "Player", Offset = Vector3.new(0, 2.5, -5) },
+					Look = { Anchor = "Player", Offset = Vector3.new(0, 1.5, 0) },
+				},
+				Duration = 18,
+				Lines = {
+					{ Speaker = VOICE, Text = "The seal is still cracked. It needs a seventh. It always did." },
+					{ Speaker = VOICE, Text = "Not you. You've given enough. It needs me." },
+					{
+						Speaker = VOICE,
+						Text = "I'm the part of you that remembers the mountain. The six. The fear. Let me be the one who stays.",
+					},
+					{
+						Speaker = VOICE,
+						Text = "You'll forget me. That's alright. You've made new memories since the riverbank. Better ones.",
+					},
+					{
+						Speaker = VOICE,
+						Text = "A home. A name people say kindly. Friends who'd climb a mountain for you.",
+					},
+					{ Speaker = VOICE, Text = "Keep those, {name}. Those were always the ones worth keeping." },
+				},
+			},
+			{
+				Black = true,
+				Duration = 6,
+				Lines = {
+					{ Speaker = "", Text = "The voice is gone. The mountain is quiet." },
+					{ Speaker = "", Text = "For the first time since you woke by the river, the silence is yours." },
 				},
 			},
 		},
@@ -269,9 +364,11 @@ Story.QuestEchoes = {
 	MQ3 = "Echo2",
 	MQ4 = "Echo3",
 	MQ5 = "Echo4",
+	MQ5B = "EchoOath",
 	MQ6 = "Echo5",
+	MQ8 = "Echo6",
 }
 
-Story.EchoOrder = { "Echo1", "Echo2", "Echo3", "Echo4", "Echo5" }
+Story.EchoOrder = { "Echo1", "Echo2", "Echo3", "Echo4", "EchoOath", "Echo5", "Echo6" }
 
 return Story

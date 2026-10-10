@@ -57,7 +57,8 @@ Tiers unlock at levels 1 / 3 / 6 / 10, and nodes have prerequisites. Seer Ilsa r
 ### Combat
 * **Weapon types:** Sword (cleaves 3 targets), Axe (slow, cleaves 4), Dagger (fast, single target,
   +crit), Staff (ranged bolt, scales with Spell Power).
-* Server-authoritative hit detection: the client sends only an aim direction.
+* Server-authoritative hit detection: the client sends only an aim direction. Aim assist snaps
+  melee swings to the nearest enemy you're roughly facing, and every hit flashes the target.
 * Enemies have aggro range, leash to their zone, reset and heal if you run away, and wind up
   before every attack. Elites and bosses have telegraphed area attacks.
 * Co-op friendly: everyone who damages an enemy gets full XP, gold, drops and quest credit.
@@ -116,11 +117,18 @@ that reveals another piece:
 | Teeth in the Woods | I: The Burning Wood | You've seen this before; you never ran |
 | Arms for the Watch | II: A Blade With a Name | You were a warrior for a very long time |
 | The Redfang Problem | III: What Was Buried | Someone is digging up what *you* buried |
+| Crown Coin | | The bandits were paid in Crown gold that vanished with the Chancellor's brother, Corvin |
 | Whispers Below | IV: The Ashen Guard | The truth about the seal and the voice |
-| The Ashen Wake | V: Oathbreaker | The Mother knows you, and you have a choice about who you become |
+| The Seventh Name | The Night Before | Corvin was the seventh of the Guard, and he ran before the binding. The seal was never whole |
+| The Ashen Wake | V: Oathbreaker | The Mother calls you oathbreaker; the broken oath was Corvin's |
+| The Hand in the Dark | | Corvin's cult, the Ashen Hand, is alive and trying to open the seal |
+| Ashes to Ashes | VI: What You Choose to Keep | Corvin falls; the voice gives itself as the seventh soul and is gone |
 
-The ending of chapter one deliberately points at the player-driven systems: *"Build a home. Earn a
-name. Rule this valley if you want to."* Chapter two (the Mother of Ash) continues from Echo V.
+The finale is bittersweet on purpose. The voice that guided you all game leaves, and the last line is
+*"For the first time since you woke by the river, the silence is yours."* The player-driven systems
+(home, office, farm) are the "new memories worth keeping" it speaks of.
+
+Supporting characters change what they say as the story moves on (`Greetings` in `Config/World`).
 
 ## Time, calendar & night
 * **Clock:** every server opens at **night** (9:30 PM), and a game day lasts 24 real minutes.
@@ -171,21 +179,25 @@ sliders (scaled within each race's range), skin tone (per-race palette), 9 hair 
 5 beards and 8 outfits. Seer Ilsa can reshape your appearance later for gold.
 
 ## World & exploration
-A 3,600 × 3,600 stud open world generated from config: rolling hills, a mountain border, a volcano,
+A 3,600 × 3,600 stud open world generated from config, with real elevation: ridged mountain ranges up
+to ~270 studs, valleys, plateaus, a mountain border, a volcano,
 a winding river with bridges, three lakes (one with an island shrine), forests, snowfields and marsh.
 * **Regions:** Riverwatch (walled town), Greenmeadow (farmland and property plots) and 7 combat zones
   from level 1 to 15.
 * **12 landmarks** grant XP when discovered and become fast-travel points on the map (M).
 * **Gathering:** about 350 herb and ore spots, placed by biome.
 * **Day/night:** a 24-minute cycle.
+* **Living towns:** townsfolk walk Riverwatch's and Aurelion's streets (along a graph of street
+  points, so they never cut through houses), stop to work or chat, and call out to passers-by.
+  Quest NPCs potter about near their posts and stop to face you when you talk to them.
 
 | Zone | Levels | Enemies |
 | --- | --- | --- |
 | Whisperwood | 1-3 | Wolves |
 | Redfang Camp | 3-5 | Bandits, Grisk the Redfang (elite) |
-| Hollow Crypt | 6-8 | Hollow Dead |
+| Hollow Crypt | 6-9 | Hollow Dead, Ashen Acolytes |
 | Mirelake Marsh | 7-9 | Bog Lurkers |
-| Cinder Peak | 9+ | The Ashen Wyrmling (boss) |
+| Cinder Peak | 9-12 | The Ashen Wyrmling, Corvin the Unburnt (bosses) |
 | Frosthollow | 10-12 | Frost Trolls |
 | Ruins of Vael | 12-15 | Ruin Sentinels |
 

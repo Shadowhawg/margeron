@@ -10,6 +10,12 @@ local New = Create.New
 local player = Players.LocalPlayer
 
 local Loading = {}
+local released = false
+
+-- The intro calls this once it has the screen covered; until then new players keep the loading screen.
+function Loading.Release()
+	released = true
+end
 
 function Loading.Init()
 	local gui = Create.Screen("Loading", 200)
@@ -50,6 +56,11 @@ function Loading.Init()
 			dots = dots % 3 + 1
 			status.Text = "The world is taking shape" .. string.rep(".", dots)
 			task.wait(0.4)
+		end
+		-- Players who haven't seen the prologue go straight from here into the opening cutscene.
+		local waitStart = os.clock()
+		while State.Data and not State.Data.Story.PrologueSeen and not released and os.clock() - waitStart < 20 do
+			task.wait(0.1)
 		end
 		task.wait(0.5)
 		TweenService:Create(back, TweenInfo.new(1), { BackgroundTransparency = 1 }):Play()

@@ -12,7 +12,8 @@
 --                        "Collect" Target = material id (consumed on turn-in)
 --                        "Talk"    Target = NPC id
 --                        "Event"   Target = Gather | Brew | Cook | Craft | Smelt | Temper | Infuse |
---                                           Harvest | Discover | BuyHome | BuyAnimal | BuyHorse | Vote
+--                                           Harvest | Discover | BuyHome | BuyAnimal | BuyHorse | Vote |
+--                                           Visit:<landmark id> (stand at that landmark)
 --   Rewards     { XP, Gold, Weapon, Cosmetic, Materials = { [id] = count } }
 --   Dialogue    { Offer, Progress, Complete }
 --
@@ -24,8 +25,12 @@ return {
 		"MQ2",
 		"MQ3",
 		"MQ4",
+		"MQ4B",
 		"MQ5",
+		"MQ5B",
 		"MQ6",
+		"MQ7",
+		"MQ8",
 		"SQ_Herbs",
 		"SQ_Explore",
 		"SQ_Pelts",
@@ -102,13 +107,36 @@ return {
 			Complete = "Grisk carried a map, marked with the old crypt to the north. And a purse of coin no bandit earns honestly. Someone paid them to dig.",
 		},
 	},
+	MQ4B = {
+		Name = "Crown Coin",
+		Type = "Main",
+		Giver = "Elder",
+		TurnIn = "Chancellor",
+		LevelReq = 4,
+		Requires = { "MQ4" },
+		Description = "Grisk's purse was full of fresh Crown coin, minted in Aurelion. Take it to Chancellor Aurelia and find out whose gold paid the Redfangs to dig.",
+		Objectives = {
+			{
+				Kind = "Talk",
+				Target = "Chancellor",
+				Count = 1,
+				Text = "Show the coins to Chancellor Aurelia in Aurelion",
+			},
+		},
+		Rewards = { XP = 300, Gold = 120 },
+		Dialogue = {
+			Offer = "Look at these. Crown-struck, every one, and barely handled. Riverwatch has no friends in Aurelion, but you might. Take them to the Chancellor. Follow the road east and cross the causeway.",
+			Progress = "Aurelion lies east, across the lake. The Chancellor holds court at the palace steps.",
+			Complete = "Crown coin, from my own treasury. These went missing the winter my brother vanished. Corvin. He was one of the Seven who climbed Cinder Peak. We buried an empty coffin and I gave the eulogy. ...You have the same look he had before he left. The look of someone carrying something they can't put down. Find out who is spending my brother's gold.",
+		},
+	},
 	MQ5 = {
 		Name = "Whispers Below",
 		Type = "Main",
 		Giver = "Elder",
 		TurnIn = "Mystic",
 		LevelReq = 5,
-		Requires = { "MQ4" },
+		Requires = { "MQ4B" },
 		Description = "The Hollow Crypt's dead are walking. Gather their bone dust for Seer Ilsa.",
 		Objectives = { { Kind = "Collect", Target = "BoneDust", Count = 5, Text = "Collect Bone Dust" } },
 		Rewards = { XP = 550, Gold = 180 },
@@ -118,13 +146,37 @@ return {
 			Complete = "Ash. There's ash in the bone. These were soldiers once. They wore your colors. ...Don't look at me like that. You already knew.",
 		},
 	},
+	MQ5B = {
+		Name = "The Seventh Name",
+		Type = "Main",
+		Giver = "Mystic",
+		TurnIn = "Archmage",
+		LevelReq = 6,
+		Requires = { "MQ5" },
+		Description = "Seven names were carved at the Drowned Shrine the night the Ashen Guard rode out. Read what's left of them, then take it to the Archmage in Aurelion.",
+		Objectives = {
+			{
+				Kind = "Event",
+				Target = "Visit:DrownedShrine",
+				Count = 1,
+				Text = "Read the names at the Drowned Shrine",
+			},
+			{ Kind = "Talk", Target = "Archmage", Count = 1, Text = "Bring the rubbing to Archmage Selene" },
+		},
+		Rewards = { XP = 650, Gold = 200 },
+		Dialogue = {
+			Offer = "The Guard carved their names at the Drowned Shrine before they climbed, on the island in Glass Lake, far to the west. Six names were worn away by the water. One was cut away with a knife. Go and read what's left. Then take it to the Collegium in Aurelion. The Archmage can read what's been erased.",
+			Progress = "Glass Lake lies west, past the Greyspire. You'll have to swim the last of it.",
+			Complete = "Seven names. Six I can read, the Guard who gave their lives to the binding. The seventh was scratched out by someone who knew how to hide from the stars. Not from me, though. Corvin. He didn't die on the mountain. He ran before the binding was finished. The seal took six souls and your memory, when it needed seven. That's why it's cracking.",
+		},
+	},
 	MQ6 = {
 		Name = "The Ashen Wake",
 		Type = "Main",
 		Giver = "Mystic",
 		TurnIn = "Elder",
 		LevelReq = 8,
-		Requires = { "MQ5" },
+		Requires = { "MQ5B" },
 		Description = "Climb Cinder Peak and slay the Ashen Wyrmling before it wakes its mother.",
 		Objectives = { { Kind = "Kill", Target = "AshenWyrmling", Count = 1, Text = "Slay the Ashen Wyrmling" } },
 		Rewards = { XP = 1400, Gold = 500, Cosmetic = "TitleWyrmslayer" },
@@ -132,6 +184,41 @@ return {
 			Offer = "A wyrmling has nested on Cinder Peak, far to the northeast. Its breath is what wakes the dead. Bring friends if you have them. Bring courage if you don't.",
 			Progress = "The ash still falls. The wyrm still lives.",
 			Complete = "Wyrmslayer! Riverwatch owes you everything. Take land, build a home. Stand for the Hall, even. This valley could use someone who doesn't run.",
+		},
+	},
+	MQ7 = {
+		Name = "The Hand in the Dark",
+		Type = "Main",
+		Giver = "Chancellor",
+		TurnIn = "Chancellor",
+		LevelReq = 9,
+		Requires = { "MQ6" },
+		Description = "Masked zealots calling themselves the Ashen Hand have taken the Hollow Crypt, and they pay in Crown coin. Break them and bring back proof of who leads them.",
+		Objectives = {
+			{ Kind = "Kill", Target = "AshenAcolyte", Count = 6, Text = "Defeat Ashen Acolytes at the Hollow Crypt" },
+			{ Kind = "Collect", Target = "AshenSigil", Count = 3, Text = "Recover Ashen Hand sigils" },
+		},
+		Rewards = { XP = 1500, Gold = 450 },
+		Dialogue = {
+			Offer = "Word travels fast. You killed the wyrmling, and now men in grey masks are digging in the Hollow Crypt again. They call themselves the Ashen Hand. They pay in Crown coin. My brother's coin. Scatter them, and bring me their sigils. I need to see the mark with my own eyes.",
+			Progress = "The crypt lies north. They gather after dark, when the dead are restless.",
+			Complete = "...That's his ring. Corvin's seal, pressed into every one. He's alive, and he's on Cinder Peak, trying to open the seal from outside. He thinks he can free the six he left behind. He can't. All he'll do is wake her.",
+		},
+	},
+	MQ8 = {
+		Name = "Ashes to Ashes",
+		Type = "Main",
+		Giver = "Chancellor",
+		TurnIn = "Elder",
+		LevelReq = 11,
+		Requires = { "MQ7" },
+		Description = "Corvin the Unburnt is breaking the seal on Cinder Peak. Stop him before the Mother of Ash wakes.",
+		Objectives = { { Kind = "Kill", Target = "Corvin", Count = 1, Text = "Stop Corvin on Cinder Peak" } },
+		Rewards = { XP = 2600, Gold = 900, Cosmetic = "TitleUnforgotten" },
+		Dialogue = {
+			Offer = "Go. Stop him. If you can bring him home, bring him home. If you can't... don't let him finish. I buried him once. I can do it again.",
+			Progress = "Cinder Peak. The ash is falling on the city now. We are out of time.",
+			Complete = "You came back down the mountain. Again. ...You're different. Lighter, somehow, like you put something down up there. Whatever you left behind, Riverwatch is glad of who came home.",
 		},
 	},
 

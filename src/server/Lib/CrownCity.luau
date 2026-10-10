@@ -238,8 +238,8 @@ function CrownCity.Build(groundAt)
 	})
 	local light = Instance.new("PointLight")
 	light.Color = rgb(255, 220, 150)
-	light.Range = 60
-	light.Brightness = 3
+	light.Range = 40
+	light.Brightness = 0.8
 	light.Parent = beacon
 
 	-- Palace wings around the tower, each with a passage through the middle.
@@ -423,7 +423,8 @@ function CrownCity.Build(groundAt)
 	})
 	local starLight = Instance.new("PointLight")
 	starLight.Color = rgb(170, 200, 255)
-	starLight.Range = 30
+	starLight.Range = 24
+	starLight.Brightness = 0.6
 	starLight.Parent = star
 
 	-- Arena to the east

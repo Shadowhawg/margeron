@@ -11,6 +11,7 @@ local Create = require(script.Parent.Parent.UI.Create)
 local Theme = require(script.Parent.Parent.UI.Theme)
 local State = require(script.Parent.Parent.State)
 local Net = require(script.Parent.Parent.Controllers.Net)
+local Cinematic = require(script.Parent.Parent.Controllers.Cinematic)
 local New = Create.New
 
 local player = Players.LocalPlayer
@@ -279,7 +280,11 @@ function Creator.Render()
 	Create.Button(firstTime and "This is me" or "Confirm", Theme.Good, function()
 		local result = Net.Request("ConfirmAppearance", appearance)
 		if result.ok then
-			Creator.Close()
+			if firstTime then
+				-- Black out first so the hand-off into the next cutscene is never seen.
+				Cinematic.HoldBlack()
+			end
+			Creator.Close(firstTime)
 			confirmedEvent:Fire()
 		end
 	end, { Size = UDim2.fromScale(0.6, 1), TextSize = 17, Parent = buttons })
@@ -319,13 +324,16 @@ function Creator.Open(isFirstTime)
 	Creator.Render()
 end
 
-function Creator.Close()
+-- keepCamera: leave the camera where it is (the intro cuts straight into another cutscene).
+function Creator.Close(keepCamera)
 	gui.Enabled = false
 	Creator.Open_ = false
-	camera.CameraType = Enum.CameraType.Custom
-	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		camera.CameraSubject = humanoid
+	if not keepCamera then
+		camera.CameraType = Enum.CameraType.Custom
+		local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			camera.CameraSubject = humanoid
+		end
 	end
 	local playerGui = player:FindFirstChild("PlayerGui")
 	for _, name in ipairs({ "HUD", "Windows", "Clock" }) do

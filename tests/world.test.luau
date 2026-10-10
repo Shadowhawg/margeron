@@ -314,6 +314,20 @@ print(
 		tags.RestSpot or 0
 	)
 )
+-- Townsfolk walk a graph of street points: every point must be on dry land and linked.
+local TownLife = require(setmetatable({ Path = "Server/Services/TownLifeService" }, NodeMt))
+TownLife.Init({ WorldService = WorldService })
+local riverwatch, aurelion = TownLife.BuildGraphs()
+for name, graph in pairs({ Riverwatch = riverwatch, Aurelion = aurelion }) do
+	check(#graph.Nodes > 20, name .. " street graph has points (" .. #graph.Nodes .. ")")
+	local dry, linked = true, true
+	for i, p in ipairs(graph.Nodes) do
+		dry = dry and p.Y > 3
+		linked = linked and #graph.Links[i] > 0
+	end
+	check(dry, name .. " street points are on dry land")
+	check(linked, name .. " street points are all connected")
+end
 check(total < 40000, "part count is reasonable (" .. total .. ")")
 check((tags.CraftingStation or 0) >= 7, "town and city stations built")
 check((tags.RestSpot or 0) >= 2, "inn beds built")

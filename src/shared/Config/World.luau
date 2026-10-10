@@ -60,6 +60,24 @@ return {
 			Position = Vector3.new(0, 0, -34),
 			Color = Color3.fromRGB(90, 70, 120),
 			Greeting = "You again. The river gave you back to us, and I've stopped asking why.",
+			Greetings = {
+				{
+					After = "MQ2",
+					Text = "The wolves have settled since you thinned them. The children play by the river again. Thank you.",
+				},
+				{
+					After = "MQ4",
+					Text = 'Caravans are moving again. People have started calling you "the river-born". I\'d get used to it.',
+				},
+				{
+					After = "MQ6",
+					Text = "Wyrmslayer. I still can't quite believe it. Sit, if you like. You never sit.",
+				},
+				{
+					After = "MQ8",
+					Text = "The ash has stopped falling. Some mornings I catch you staring east, like you're listening for something. Is it gone, then?",
+				},
+			},
 		},
 		Blacksmith = {
 			Name = "Brann",
@@ -67,6 +85,13 @@ return {
 			Position = Vector3.new(38, 0, -6),
 			Color = Color3.fromRGB(110, 70, 40),
 			Greeting = "Need an edge? Or need one sharpened? Either way, mind the sparks.",
+			Greetings = {
+				{ After = "MQ3", Text = "Blade holding up? Course it is. I made it." },
+				{
+					After = "MQ6",
+					Text = 'They\'re singing songs about you in the tavern. Terrible songs. The one about the wyrm rhymes "scale" with "ale" four times.',
+				},
+			},
 		},
 		Hunter = {
 			Name = "Ysolde",
@@ -81,6 +106,16 @@ return {
 			Position = Vector3.new(-26, 0, -40),
 			Color = Color3.fromRGB(60, 90, 160),
 			Greeting = "You hear it too, don't you? The voice. No, don't answer. Not here.",
+			Greetings = {
+				{
+					After = "MQ5",
+					Text = "The bones are quiet now. You are not. I can hear two heartbeats when you stand close, did you know?",
+				},
+				{
+					After = "MQ8",
+					Text = "One heartbeat now. Only one. ...Be gentle with yourself. Grief for a part of you is still grief.",
+				},
+			},
 		},
 		Trader = {
 			Name = "Marta",
@@ -109,11 +144,26 @@ return {
 			Position = cityPoint(-40, 0),
 			Color = Color3.fromRGB(120, 30, 50),
 			Greeting = "Welcome to Aurelion. Mind the guards, mind your manners, and mind the Tower. It has been watching the east for three hundred years.",
+			Greetings = {
+				{
+					After = "MQ4B",
+					Text = "Any word of the coins? I've had the mint's ledgers pulled. Someone has been very careful.",
+				},
+				{
+					After = "MQ7",
+					Text = "I keep his letters in my desk. I've read them all twice since you brought me the sigils.",
+				},
+				{
+					After = "MQ8",
+					Text = "He was my brother, and he was afraid, and he did terrible things because of it. Thank you for ending it. I mean that.",
+				},
+			},
 		},
 		Armorer = {
 			Name = "Master Davor",
 			Role = "Royal Armorer",
 			Position = cityPoint(-148, -32),
+			Wander = 4, -- keeps close to the shop door
 			Color = Color3.fromRGB(90, 90, 100),
 			Shop = "Blacksmith",
 			Greeting = "Crown steel. The finest in Margeron, priced accordingly.",
@@ -125,11 +175,22 @@ return {
 			Color = Color3.fromRGB(70, 60, 140),
 			Shop = "Blacksmith",
 			Greeting = "The stars remember everything, even what you've forgotten. Especially that, in your case.",
+			Greetings = {
+				{
+					After = "MQ5B",
+					Text = "The stars over Cinder Peak are dimmer every night. Whatever you mean to do, do it soon.",
+				},
+				{
+					After = "MQ8",
+					Text = "The seal is whole. Seven souls, at last. I won't ask whose the seventh was. I think I already know.",
+				},
+			},
 		},
 		Innkeeper = {
 			Name = "Odo",
 			Role = "The Gilded Stag",
 			Position = cityPoint(-128, 46),
+			Wander = 4, -- keeps close to the shop door
 			Color = Color3.fromRGB(150, 100, 60),
 			RestCost = 15,
 			Greeting = "Best beds in the Crown City. Best ale too, if you ask me. Which you should.",
@@ -200,13 +261,13 @@ return {
 		},
 		HollowCrypt = {
 			Name = "Hollow Crypt",
-			Levels = "6-8",
+			Levels = "6-9",
 			Position = Vector3.new(220, 0, -800),
 			Radius = 100,
 			Material = Enum.Material.Slate,
 			Biome = "Crypt",
 			RespawnTime = 18,
-			Spawns = { { Enemy = "Skeleton", Count = 10 } },
+			Spawns = { { Enemy = "Skeleton", Count = 10 }, { Enemy = "AshenAcolyte", Count = 4 } },
 		},
 		Mirelake = {
 			Name = "Mirelake Marsh",
@@ -220,13 +281,13 @@ return {
 		},
 		CinderPeak = {
 			Name = "Cinder Peak",
-			Levels = "9+ (Boss)",
+			Levels = "9-12 (Bosses)",
 			Position = Vector3.new(1180, 0, -1180),
 			Radius = 110,
 			Material = Enum.Material.Basalt,
 			Biome = "Volcano",
 			RespawnTime = 120,
-			Spawns = { { Enemy = "AshenWyrmling", Count = 1 } },
+			Spawns = { { Enemy = "AshenWyrmling", Count = 1 }, { Enemy = "Corvin", Count = 1 } },
 		},
 		FrostHollow = {
 			Name = "Frosthollow",
@@ -258,7 +319,7 @@ return {
 	},
 
 	-- The volcano rising under Cinder Peak.
-	Volcano = { Position = Vector3.new(1180, 0, -1180), BaseRadius = 520, Height = 150, TopRadius = 115 },
+	Volcano = { Position = Vector3.new(1180, 0, -1180), BaseRadius = 620, Height = 260, TopRadius = 115 },
 
 	-- Discoverable places. Finding one grants XP and marks it on your map (M).
 	Landmarks = {

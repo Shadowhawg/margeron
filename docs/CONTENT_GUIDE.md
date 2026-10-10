@@ -8,13 +8,13 @@ systems pick the changes up. No systems code needs editing.
 `Config/Quests.luau`: add an entry and put its id in `Order`.
 
 ```lua
-MQ7 = {
+MQ9 = {
 	Name = "The Mother of Ash",
 	Type = "Main",
 	Giver = "Elder",          -- NPC id from Config/World (nil = starts automatically)
 	TurnIn = "Elder",
 	LevelReq = 12,
-	Requires = { "MQ6" },     -- unlocks after MQ6
+	Requires = { "MQ8" },     -- unlocks after MQ8
 	Description = "...",
 	Objectives = {
 		{ Kind = "Kill", Target = "FrostTroll", Count = 5, Text = "Slay Frost Trolls" },
@@ -26,7 +26,20 @@ MQ7 = {
 },
 ```
 
+Objective kinds: `Kill`, `Collect`, `Talk`, and `Event`. Event targets: `Gather`, `Brew`, `Cook`,
+`Craft`, `Smelt`, `Temper`, `Infuse`, `Harvest`, `Discover`, `BuyHome`, `BuyAnimal`, `BuyHorse`,
+`Vote`, or `Visit:<landmark id>` (stand at that landmark, e.g. `Visit:DrownedShrine`).
+
 NPCs automatically show `!` when they have a quest for you and `?` when you can turn one in.
+
+To make an NPC react to story progress, give it `Greetings` in `Config/World.luau`; the last entry
+whose quest you've completed is used:
+
+```lua
+Greetings = {
+	{ After = "MQ2", Text = "The children play by the river again. Thank you." },
+},
+```
 
 ## Add a bounty type or flavor
 

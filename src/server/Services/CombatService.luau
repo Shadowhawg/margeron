@@ -12,6 +12,7 @@ local Services
 
 local MAX_MELEE_TARGETS = { Sword = 3, Axe = 4, Dagger = 1 }
 local LATENCY_TOLERANCE = 0.12
+local REACH_TOLERANCE = 2 -- enemies keep moving while the swing travels over the network
 
 local lastUsed = {} -- [Player] = { [actionName] = os.clock() }
 local lastCombat = {} -- [Player] = os.clock() of the last hit dealt or taken
@@ -153,11 +154,13 @@ function CombatService.Attack(player, aim)
 	local flat = Vector3.new(direction.X, 0, direction.Z)
 	flat = flat.Magnitude > 0.01 and flat.Unit or root.CFrame.LookVector
 	local candidates = {}
-	for _, e in ipairs(Services.EnemyService.InRadius(root.Position, weapon.Range)) do
+	-- A generous arc (~200 degrees in front). Normal hits don't knock enemies back: shoving them
+	-- out of reach after every swing made fights feel broken.
+	for _, e in ipairs(Services.EnemyService.InRadius(root.Position, weapon.Range + REACH_TOLERANCE)) do
 		local offset = e.Root.Position - root.Position
 		offset = Vector3.new(offset.X, 0, offset.Z)
-		local inFront = offset.Magnitude < e.Info.BodyRadius + 1 or flat:Dot(offset.Unit) > 0.3
-		if inFront and math.abs(e.Root.Position.Y - root.Position.Y) < 12 then
+		local inFront = offset.Magnitude < e.Info.BodyRadius + 2 or flat:Dot(offset.Unit) > -0.15
+		if inFront and math.abs(e.Root.Position.Y - root.Position.Y) < 12 + e.Info.Height / 2 then
 			table.insert(candidates, { E = e, Dist = offset.Magnitude })
 		end
 	end
@@ -165,9 +168,7 @@ function CombatService.Attack(player, aim)
 		return a.Dist < b.Dist
 	end)
 	for i = 1, math.min(#candidates, MAX_MELEE_TARGETS[weapon.Type] or 2) do
-		local target = candidates[i].E
-		hit(player, target, stats.WeaponDamage, "Physical")
-		Services.EnemyService.Knockback(target, target.Root.Position - root.Position, weapon.Type == "Axe" and 22 or 12)
+		hit(player, candidates[i].E, stats.WeaponDamage, "Physical")
 	end
 end
 
@@ -179,7 +180,7 @@ function abilityHandlers.Whirlwind(player, stats, root)
 	Remotes.Effect:FireAllClients("Spin", player.Character)
 	for _, e in ipairs(Services.EnemyService.InRadius(root.Position, ability.Radius)) do
 		hit(player, e, stats.WeaponDamage * ability.WeaponMultiplier, "Physical")
-		Services.EnemyService.Knockback(e, e.Root.Position - root.Position, 30)
+		Services.EnemyService.Knockback(e, e.Root.Position - root.Position, 20)
 	end
 end
 

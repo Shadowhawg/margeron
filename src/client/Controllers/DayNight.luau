@@ -4,10 +4,12 @@ local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Clock = require(Shared.Clock)
 local Calendar = require(Shared.Config.Calendar)
+local World = require(Shared.Config.World)
 local Create = require(script.Parent.Parent.UI.Create)
 local Theme = require(script.Parent.Parent.UI.Theme)
 
@@ -59,10 +61,13 @@ end
 
 function DayNight.Init()
 	local gui = Create.Screen("Clock", 2)
+	-- Bottom-right corner, out of the way of the view. On touch screens the jump button lives
+	-- there, so sit above it.
+	local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 	local frame = Create.New("Frame", {
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 8),
-		Size = UDim2.fromOffset(420, 44),
+		AnchorPoint = Vector2.new(1, 1),
+		Position = UDim2.new(1, -16, 1, touch and -170 or -16),
+		Size = UDim2.fromOffset(300, 44),
 		BackgroundColor3 = Theme.Background,
 		BackgroundTransparency = 0.45,
 		Parent = gui,
@@ -92,8 +97,16 @@ function DayNight.Start()
 		Lighting.ClockTime = hour
 		local n = nightFactor(hour)
 		Lighting.OutdoorAmbient = DAY_AMBIENT:Lerp(NIGHT_AMBIENT, n)
-		Lighting.Brightness = 2.4 - n * 1.2
-		Lighting.ExposureCompensation = n * 0.35
+		-- Inside Aurelion's white marble walls the light bounces everywhere; tone it down there
+		-- so faces stay readable.
+		local city = 0
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if root then
+			local offset = (root.Position - World.City.Position) * Vector3.new(1, 0, 1)
+			city = 1 - math.clamp((offset.Magnitude - World.City.WallRadius) / 60, 0, 1)
+		end
+		Lighting.Brightness = 2.4 - n * 1.2 - city * 0.6
+		Lighting.ExposureCompensation = n * 0.2 - city * 0.25
 	end)
 	task.spawn(function()
 		while true do

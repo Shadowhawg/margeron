@@ -58,6 +58,38 @@ local function aimDirection(root)
 	return Vector3.new(look.X, math.clamp(look.Y, -0.3, 0.3), look.Z).Unit
 end
 
+-- Aim assist: snap to the nearest living enemy you're roughly facing (or aiming at), so swings
+-- connect without pixel-perfect mouse aim. Staffs only assist within a narrow cone.
+local function assistedAim(root, aim, range, coneDot)
+	local folder = workspace:FindFirstChild("Enemies")
+	if not folder then
+		return aim
+	end
+	local facing = root.CFrame.LookVector
+	local best, bestScore = nil, math.huge
+	for _, model in ipairs(folder:GetChildren()) do
+		local enemyRoot = model:FindFirstChild("HumanoidRootPart") or model.PrimaryPart
+		if enemyRoot and not model:GetAttribute("Dead") then
+			local offset = enemyRoot.Position - root.Position
+			local flat = Vector3.new(offset.X, 0, offset.Z)
+			local dist = flat.Magnitude
+			if dist <= range and dist > 0.1 then
+				local toward = flat.Unit
+				local aimFlat = Vector3.new(aim.X, 0, aim.Z)
+				aimFlat = aimFlat.Magnitude > 0.01 and aimFlat.Unit or facing
+				local dot = math.max(toward:Dot(aimFlat), toward:Dot(facing))
+				if dot >= coneDot then
+					local score = dist * (2 - dot)
+					if score < bestScore then
+						best, bestScore = offset, score
+					end
+				end
+			end
+		end
+	end
+	return best and best.Unit or aim
+end
+
 -- Turn toward the aim without fighting the default auto-rotation (which caused the jitter).
 local autoRotateToken = 0
 local function faceDirection(root, dir)
@@ -95,7 +127,13 @@ local function tryAttack()
 	end
 	lastAttack = now
 	HUD.StartCooldown("Attack", stats.Weapon.Cooldown)
+	local weapon = stats.Weapon
 	local dir = aimDirection(root)
+	if weapon.Type == "Staff" then
+		dir = assistedAim(root, dir, weapon.Range, 0.94)
+	else
+		dir = assistedAim(root, dir, weapon.Range + 6, -0.2)
+	end
 	faceDirection(root, dir)
 	Remotes.Attack:FireServer(dir)
 end
@@ -124,6 +162,9 @@ local function useAbility(abilityId)
 		return
 	end
 	local dir = aimDirection(root)
+	if abilityId == "Firebolt" then
+		dir = assistedAim(root, dir, Abilities.Firebolt.Range, 0.9)
+	end
 	faceDirection(root, dir)
 	-- Optimistically show the cooldown, then correct it from the server's answer.
 	HUD.StartCooldown(abilityId, 0.5)

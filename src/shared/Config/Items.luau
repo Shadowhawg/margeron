@@ -196,6 +196,7 @@ Items.Cosmetics = {
 	TitleSellsword = { Name = "Sellsword", Slot = "Title" },
 	TitleBountyHunter = { Name = "Bounty Hunter", Slot = "Title" },
 	TitleWarden = { Name = "Warden of Riverwatch", Slot = "Title" },
+	TitleUnforgotten = { Name = "The Unforgotten", Slot = "Title" },
 	TitleLegend = { Name = "Legend of Margeron", Slot = "Title" },
 	TitleFounder = { Name = "Founder", Slot = "Title", Premium = "FounderTitle" },
 	TitleExplorer = { Name = "Pathfinder", Slot = "Title" },
@@ -209,6 +210,7 @@ Items.Materials = {
 	-- Monster parts
 	WolfPelt = { Name = "Wolf Pelt", Category = "Monster", Value = 4 },
 	BanditInsignia = { Name = "Redfang Insignia", Category = "Monster", Value = 6 },
+	AshenSigil = { Name = "Ashen Hand Sigil", Category = "Monster", Value = 18 },
 	BoneDust = {
 		Name = "Bone Dust",
 		Category = "Monster",

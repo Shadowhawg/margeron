@@ -294,7 +294,16 @@ for id, q in pairs(Quests) do
 	if type(q) == "table" and id ~= "Order" then
 		for _, o in ipairs(q.Objectives) do
 			if o.Kind == "Event" then
-				check(EVENTS[o.Target] ~= nil, "quest event valid " .. id .. " " .. o.Target)
+				local landmark = o.Target:match("^Visit:(.+)$")
+				if landmark then
+					local found = false
+					for _, l in ipairs(World.Landmarks) do
+						found = found or l.Id == landmark
+					end
+					check(found, "visit target is a landmark " .. id .. " " .. landmark)
+				else
+					check(EVENTS[o.Target] ~= nil, "quest event valid " .. id .. " " .. o.Target)
+				end
 			end
 		end
 		for m in pairs((q.Rewards or {}).Materials or {}) do

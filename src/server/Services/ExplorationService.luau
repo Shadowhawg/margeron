@@ -27,6 +27,7 @@ local function buildDiscoverables()
 			Position = Services.WorldService.GetLandmarkPosition(landmark.Id),
 			Radius = GameConfig.DiscoveryRadius,
 			XP = landmark.XP,
+			Visit = true,
 		})
 	end
 	for zoneId, zone in pairs(World.Zones) do
@@ -77,6 +78,14 @@ local function checkDiscoveries()
 					and Util.FlatDistance(root.Position, entry.Position) <= entry.Radius
 				then
 					discover(player, data, entry)
+				end
+				-- Quests can ask you to go back to a landmark ("Visit:<id>"), discovered or not.
+				if
+					entry.Visit
+					and data.Quests.Active
+					and Util.FlatDistance(root.Position, entry.Position) <= math.min(entry.Radius, 40)
+				then
+					Services.QuestService.OnEvent(player, "Visit:" .. entry.Id)
 				end
 			end
 		end

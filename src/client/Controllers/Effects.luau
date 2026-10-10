@@ -1,8 +1,10 @@
 -- Renders visual effects the server asks for: swings, bolts, bursts, damage numbers, etc.
+local CollectionService = game:GetService("CollectionService")
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -212,10 +214,14 @@ local function burst(position, radius, color)
 	Debris:AddItem(ring, 0.4)
 end
 
+local windups = {} -- [Model] = { Start, Duration } (raised arms while an enemy winds up)
+setmetatable(windups, { __mode = "k" })
+
 local function windup(model, duration)
 	if not model or not model.Parent then
 		return
 	end
+	windups[model] = { Start = os.clock(), Duration = duration }
 	local highlight = Instance.new("Highlight")
 	highlight.FillColor = Color3.fromRGB(255, 60, 40)
 	highlight.OutlineColor = Color3.fromRGB(255, 200, 120)
@@ -262,8 +268,19 @@ local handlers = {
 	Bolt = bolt,
 	Burst = burst,
 	Windup = windup,
-	DamageNumber = function(position, amount, crit)
+	DamageNumber = function(position, amount, crit, model)
 		playSound(SOUNDS.Hit, position, crit and 0.8 or 0.5, crit and 0.8 or nil)
+		-- Hit flash: the enemy blinks white so every connecting blow is obvious.
+		if model and model.Parent then
+			local flash = Instance.new("Highlight")
+			flash.FillColor = crit and Color3.fromRGB(255, 220, 90) or Color3.new(1, 1, 1)
+			flash.FillTransparency = 0.35
+			flash.OutlineTransparency = 1
+			flash.DepthMode = Enum.HighlightDepthMode.Occluded
+			flash.Parent = model
+			TweenService:Create(flash, TweenInfo.new(0.25), { FillTransparency = 1 }):Play()
+			Debris:AddItem(flash, 0.3)
+		end
 		if crit then
 			floatingText(position, amount .. "!", Color3.fromRGB(255, 220, 60), 34, 0.9)
 		else
@@ -383,6 +400,97 @@ local function updateCrouchPose(character)
 	end
 end
 
+-- Walkers (townsfolk, NPCs, enemies) are part-built rigs welded to their root. Swing their limbs
+-- from the hip/shoulder as they move, and play simple activities ("Work", "Talk") when standing.
+local LIMBS = { LeftArm = 1, RightArm = -1, LeftLeg = -1, RightLeg = 1 }
+local ARMS = { LeftArm = false, RightArm = true } -- value: is it the right arm
+local walkers = {} -- [Model] = { Joints = { {Weld, Base, Half, Phase, IsArm, IsRight} }, Clock }
+setmetatable(walkers, { __mode = "k" })
+
+local function setupWalker(model)
+	if walkers[model] or not model:IsA("Model") then
+		return
+	end
+	local joints = {}
+	local legIndex = 0
+	for _, limb in ipairs(model:GetChildren()) do
+		local name: string = limb.Name
+		if limb:IsA("BasePart") and (LIMBS[name] or name == "Leg") then
+			local weld = limb:FindFirstChildOfClass("Weld")
+			if weld then
+				local isArm = ARMS[name] ~= nil
+				local isRight = ARMS[name] == true
+				local sign = LIMBS[name]
+				if name == "Leg" then
+					-- Beasts: front-left and back-right move together.
+					legIndex += 1
+					sign = (legIndex == 1 or legIndex == 4) and 1 or -1
+				end
+				table.insert(joints, {
+					Weld = weld,
+					Base = weld.C0,
+					Half = limb.Size.Y / 2,
+					Sign = sign,
+					IsArm = isArm,
+					IsRight = isRight,
+				})
+			end
+		end
+	end
+	if #joints > 0 then
+		walkers[model] = { Joints = joints, Phase = math.random() * 6, T = 0 }
+	end
+end
+
+local function animateWalkers(dt)
+	local camera = workspace.CurrentCamera
+	local camPos = camera and camera.CFrame.Position or Vector3.zero
+	local now = os.clock()
+	for model, state in pairs(walkers) do
+		local root = model.Parent and model.PrimaryPart
+		if not root then
+			walkers[model] = nil
+			continue
+		end
+		if (root.Position - camPos).Magnitude > 160 then
+			continue
+		end
+		local v = root.AssemblyLinearVelocity
+		local speed = Vector3.new(v.X, 0, v.Z).Magnitude
+		local moving = math.clamp(speed / 7, 0, 1)
+		state.Phase += dt * (4 + speed * 0.9)
+		state.T += dt
+		local activity = model:GetAttribute("Activity")
+		local wind = windups[model]
+		local windAmount = 0
+		if wind then
+			local t = (now - wind.Start) / wind.Duration
+			if t > 1.15 then
+				windups[model] = nil
+			else
+				windAmount = t < 1 and t or (1.15 - t) / 0.15
+			end
+		end
+		for _, joint in ipairs(state.Joints) do
+			local swing = math.sin(state.Phase) * 0.7 * moving * joint.Sign
+			if joint.IsArm and speed < 1 then
+				if activity == "Work" and joint.IsRight then
+					swing = -0.6 - math.abs(math.sin(state.T * 5)) * 1.1 -- hammering, sweeping, stirring
+				elseif activity == "Talk" then
+					swing = math.sin(state.T * 2.2 + (joint.IsRight and 0 or 1.7)) * 0.35 - 0.25
+				end
+			end
+			if joint.IsArm and windAmount > 0 then
+				swing = -2.6 * windAmount -- arms raised to strike
+			end
+			joint.Weld.C0 = joint.Base
+				* CFrame.new(0, joint.Half, 0)
+				* CFrame.Angles(swing, 0, 0)
+				* CFrame.new(0, -joint.Half, 0)
+		end
+	end
+end
+
 local function watchCharacter(character)
 	character:GetAttributeChangedSignal("Mounted"):Connect(function()
 		updateMountPose(character)
@@ -401,6 +509,15 @@ local function watchPlayer(p)
 end
 
 function Effects.Start()
+	for _, model in ipairs(CollectionService:GetTagged("Walker")) do
+		task.spawn(setupWalker, model)
+	end
+	CollectionService:GetInstanceAddedSignal("Walker"):Connect(function(model)
+		task.wait(0.2) -- let the limbs replicate
+		setupWalker(model)
+	end)
+	RunService.RenderStepped:Connect(animateWalkers)
+
 	for _, p in ipairs(Players:GetPlayers()) do
 		watchPlayer(p)
 	end

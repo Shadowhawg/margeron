@@ -97,8 +97,8 @@ function WorldService.IsGenerated()
 end
 
 function WorldService.SetLordName(text)
-	if lordPlaque then
-		lordPlaque.Text = text
+	for _, label in ipairs(lordPlaque or {}) do
+		label.Text = text
 	end
 end
 
@@ -340,6 +340,7 @@ local function buildTown()
 		end
 	end
 	addGate(math.atan2(170 - center.Z, 0 - center.X))
+	WorldService.TownGates = gateAngles
 	local function nearGate(a, width)
 		for _, g in ipairs(gateAngles) do
 			if math.abs((a - g + math.pi) % (2 * math.pi) - math.pi) < width then
@@ -495,8 +496,9 @@ local function buildTown()
 		Color = rgb(190, 180, 150),
 		Material = Enum.Material.Marble,
 	})
-	local plaque = Props.Sign(statueGround + Vector3.new(0, 0, -6), "Riverwatch", Vector3.new(0, 0, -1))
-	lordPlaque = plaque:FindFirstChildOfClass("SurfaceGui"):FindFirstChild("Text")
+	local _, plaqueLabels =
+		Props.Sign(statueGround + Vector3.new(0, 0, -6), "Riverwatch, free town", Vector3.new(0, 0, -1))
+	lordPlaque = plaqueLabels
 
 	-- Well, market stalls, inn, torches
 	local wellGround = WorldService.Ground(0, 0)
@@ -1092,28 +1094,36 @@ end
 local function buildBridges()
 	local crossings = TerrainGen.RiverCrossings()
 	for _, crossing in ipairs(crossings) do
-		local p = crossing.Position
-		Props.Bridge(Vector3.new(p.X, 2.5, p.Z), crossing.Direction, World.River.Width * 2 + 56, 14)
+		-- The canyon is cut River.Width + 34 either side of the centre line; span it fully,
+		-- lengthening the bridge when the road meets the river at an angle.
+		local p, dir = crossing.Position, crossing.Direction
+		local half = math.min(110, (World.River.Width + 40) / math.max(0.35, math.abs(dir.Z)))
+		local function bank(sign)
+			local at = p + dir * half * sign
+			return Vector3.new(at.X, math.max(4, TerrainGen.HeightAt(at.X, at.Z)) + 0.5, at.Z)
+		end
+		Props.Bridge(bank(-1), bank(1), 14)
 	end
 end
 
 local function setupLighting()
 	Lighting.Brightness = 2.4
 	Lighting.OutdoorAmbient = rgb(120, 115, 130)
-	Lighting.EnvironmentDiffuseScale = 0.7
-	Lighting.EnvironmentSpecularScale = 0.6
+	Lighting.EnvironmentDiffuseScale = 0.5
+	Lighting.EnvironmentSpecularScale = 0.2
 	Lighting.GeographicLatitude = 35
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
 	atmosphere.Density = 0.3
 	atmosphere.Offset = 0.12
 	atmosphere.Color = rgb(200, 195, 185)
 	atmosphere.Decay = rgb(110, 100, 95)
-	atmosphere.Glare = 0.4
+	atmosphere.Glare = 0.1
 	atmosphere.Haze = 1.4
 	atmosphere.Parent = Lighting
 	local bloom = Lighting:FindFirstChildOfClass("BloomEffect") or Instance.new("BloomEffect")
-	bloom.Intensity = 0.5
-	bloom.Threshold = 1.5
+	bloom.Intensity = 0.25
+	bloom.Size = 18
+	bloom.Threshold = 2
 	bloom.Parent = Lighting
 	local sunRays = Lighting:FindFirstChildOfClass("SunRaysEffect") or Instance.new("SunRaysEffect")
 	sunRays.Intensity = 0.06

@@ -70,7 +70,6 @@ local function buildPerson(npcId, npc, folder)
 		Color = npc.Color,
 		HeadColor = Color3.fromRGB(234, 192, 160),
 		EyeColor = Color3.fromRGB(40, 30, 30),
-		Anchored = true,
 	})
 	local position = Services.WorldService.GetNPCPosition(npcId)
 	local ground = Services.WorldService.GroundAt(position)
@@ -85,6 +84,8 @@ local function buildPerson(npcId, npc, folder)
 		npc.Role,
 		Color3.fromRGB(255, 255, 255)
 	)
+	-- Potter about near the post (indoor NPCs keep to a smaller patch).
+	Services.TownLifeService.Animate(model, info, ground, npc.Wander or 6)
 	return info.Root
 end
 
@@ -93,6 +94,12 @@ local function buildDialogue(player, npcId, completed)
 	local npc = World.NPCs[npcId]
 	local data = Services.PlayerService.GetData(player)
 	local text = npc.Greeting
+	-- People change as the story moves on: use the greeting for the latest milestone reached.
+	for _, step in ipairs(npc.Greetings or {}) do
+		if data.Quests.Completed[step.After] then
+			text = step.Text
+		end
+	end
 	local options = {}
 
 	if completed and #completed > 0 then
@@ -184,6 +191,7 @@ function NPCService.Talk(player, npcId)
 	local playerRoot = character and character:FindFirstChild("HumanoidRootPart")
 	if npcRoot and playerRoot and not World.NPCs[npcId].IsObject then
 		local model = npcRoot.Parent
+		Services.TownLifeService.Pause(model, 30)
 		local pivot = model:GetPivot()
 		model:PivotTo(
 			CFrame.lookAt(pivot.Position, Vector3.new(playerRoot.Position.X, pivot.Position.Y, playerRoot.Position.Z))

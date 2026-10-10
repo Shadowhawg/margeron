@@ -93,6 +93,14 @@ eventTarget = function(data, eventName)
 	if station then
 		return { Position = stationPosition(station[1]), Label = station[2], Radius = 10 }
 	end
+	local visit = eventName:match("^Visit:(.+)$")
+	if visit then
+		for _, landmark in ipairs(World.Landmarks) do
+			if landmark.Id == visit then
+				return { Position = landmark.Position, Label = landmark.Name, Radius = 30 }
+			end
+		end
+	end
 	if eventName == "Harvest" then
 		return { Position = World.Farmlands.Position, Label = "Your fields", Radius = World.Farmlands.Radius * 0.6 }
 	end

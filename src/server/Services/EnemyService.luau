@@ -1,4 +1,5 @@
 -- Spawns enemies in each zone, runs their AI, and hands out rewards when they die.
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -122,6 +123,7 @@ function spawnEnemy(zoneId, enemyId)
 	)
 	model:SetAttribute("EnemyId", enemyId)
 	model.Parent = folder
+	CollectionService:AddTag(model, "Walker") -- clients swing its legs as it moves
 	info.Root:SetNetworkOwner(nil)
 	info.Humanoid.WalkSpeed = def.WalkSpeed
 
@@ -198,6 +200,15 @@ local function reach(e)
 	return e.Def.AttackRange + e.Info.BodyRadius
 end
 
+-- Distance for melee purposes: flat distance, unless one of them is far above the other
+-- (big creatures carry their root high, which used to keep them "out of reach" forever).
+local function meleeDistance(e, position)
+	local rootPos = e.Root.Position
+	local flat = Util.FlatDistance(rootPos, position)
+	local vertical = math.abs(position.Y - rootPos.Y) - e.Info.Height / 2
+	return vertical > 4 and flat + vertical or flat
+end
+
 local function face(e, position)
 	local rootPos = e.Root.Position
 	local flat = Vector3.new(position.X, rootPos.Y, position.Z)
@@ -221,7 +232,7 @@ local function basicAttack(e, player)
 			return
 		end
 		local targetRoot = playerRoot(player)
-		if targetRoot and (targetRoot.Position - e.Root.Position).Magnitude <= reach(e) + 2.5 then
+		if targetRoot and meleeDistance(e, targetRoot.Position) <= reach(e) + 2.5 then
 			Services.CombatService.DamagePlayer(player, nightDamage(e.Def.Damage), e)
 		end
 	end)
@@ -317,7 +328,7 @@ local function tickEnemy(e, now)
 
 	if e.Target then
 		local root = playerRoot(e.Target)
-		local dist = (root.Position - rootPos).Magnitude
+		local dist = meleeDistance(e, root.Position)
 		local special = def.Special
 		if special and now - e.LastSpecial >= special.Cooldown and dist <= special.Radius + (special.Offset or 0) then
 			specialAttack(e)
@@ -394,6 +405,7 @@ end
 
 local function kill(e, killer)
 	e.Dead = true
+	e.Model:SetAttribute("Dead", true)
 	active[e.Model] = nil
 	zoneCounts[e.ZoneId][e.Id] -= 1
 	rewardPlayers(e)
@@ -444,7 +456,8 @@ function EnemyService.Damage(e, amount, player, crit)
 		"DamageNumber",
 		e.Root.Position + Vector3.new(0, e.Info.Height / 2, 0),
 		amount,
-		crit
+		crit,
+		e.Model
 	)
 	if e.HP <= 0 then
 		kill(e, player)

@@ -168,8 +168,8 @@ function Props.Torch(ground)
 	})
 	local light = Instance.new("PointLight")
 	light.Color = rgb(255, 170, 90)
-	light.Range = 22
-	light.Brightness = 1.6
+	light.Range = 18
+	light.Brightness = 1
 	light.Shadows = false
 	light.Parent = flame
 	local fire = Instance.new("Fire")
@@ -271,40 +271,70 @@ function Props.Fence(a, b)
 	end
 end
 
-function Props.Sign(ground, text, facing)
-	part({
-		Name = "SignPost",
-		Size = Vector3.new(0.6, 6, 0.6),
-		Position = ground + Vector3.new(0, 3, 0),
-		Color = WOOD,
-		Material = Enum.Material.Wood,
-	})
-	local board = part({
-		Name = "Sign",
-		Size = Vector3.new(9, 2, 0.4),
-		CFrame = CFrame.lookAt(ground + Vector3.new(0, 5.5, 0), ground + Vector3.new(0, 5.5, 0) + facing),
-		Color = rgb(120, 90, 60),
-		Material = Enum.Material.WoodPlanks,
-	})
-	local gui = Instance.new("SurfaceGui")
-	gui.Face = Enum.NormalId.Front
-	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	gui.PixelsPerStud = 40
-	local label = Instance.new("TextLabel")
-	label.Name = "Text"
-	label.Size = UDim2.fromScale(1, 1)
-	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.Fantasy
-	label.TextScaled = true
-	label.TextColor3 = rgb(255, 240, 210)
-	label.Text = text
-	label.Parent = gui
-	gui.Parent = board
-	return board
+-- Paint text onto both faces of a board. Unlit (LightInfluence 0) so it stays legible at night
+-- and in shade, with a dark outline so it reads against any wood colour.
+function Props.Lettering(board, text, color)
+	local labels = {}
+	for side, face in ipairs({ Enum.NormalId.Front, Enum.NormalId.Back }) do
+		local gui = Instance.new("SurfaceGui")
+		gui.Name = side == 1 and "LetteringFront" or "LetteringBack"
+		gui.Face = face
+		gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+		gui.PixelsPerStud = 50
+		gui.LightInfluence = 0
+		gui.Brightness = 1.4
+		gui.MaxDistance = 220
+		local label = Instance.new("TextLabel")
+		label.Name = "Text"
+		label.AnchorPoint = Vector2.new(0.5, 0.5)
+		label.Position = UDim2.fromScale(0.5, 0.5)
+		label.Size = UDim2.fromScale(0.92, 0.8)
+		label.BackgroundTransparency = 1
+		label.Font = Enum.Font.Garamond
+		label.TextScaled = true
+		label.TextWrapped = true
+		label.TextColor3 = color or rgb(255, 238, 205)
+		label.TextStrokeColor3 = rgb(25, 15, 8)
+		label.TextStrokeTransparency = 0.2
+		label.Text = text
+		label.Parent = gui
+		gui.Parent = board
+		table.insert(labels, label)
+	end
+	return labels
 end
 
-function Props.Bridge(center, direction, length, width)
-	local cf = CFrame.lookAt(center, center + direction)
+-- A signpost. The board widens to fit its text and reads from both sides.
+-- Returns the board and its text labels (front, back) so callers can change the text later.
+function Props.Sign(ground, text, facing)
+	local width = math.clamp(#text * 0.62 + 2, 7, 22)
+	local lines = width >= 22 and 2 or 1
+	local height = lines == 2 and 3.4 or 2.2
+	for side = -1, 1, 2 do
+		local offset = facing:Cross(Vector3.new(0, 1, 0)).Unit * side * (width / 2 - 0.6)
+		part({
+			Name = "SignPost",
+			Size = Vector3.new(0.6, 5 + height, 0.6),
+			Position = ground + offset + Vector3.new(0, (5 + height) / 2, 0),
+			Color = WOOD,
+			Material = Enum.Material.Wood,
+		})
+	end
+	local center = ground + Vector3.new(0, 4.2 + height / 2, 0)
+	local board = part({
+		Name = "Sign",
+		Size = Vector3.new(width, height, 0.4),
+		CFrame = CFrame.lookAt(center, center + facing),
+		Color = rgb(92, 64, 42),
+		Material = Enum.Material.WoodPlanks,
+	})
+	local labels = Props.Lettering(board, text)
+	return board, labels
+end
+
+function Props.Bridge(a, b, width)
+	local length = (b - a).Magnitude
+	local cf = CFrame.lookAt((a + b) / 2, b)
 	part({
 		Name = "Bridge",
 		Size = Vector3.new(width, 1, length),
@@ -312,23 +342,49 @@ function Props.Bridge(center, direction, length, width)
 		Color = rgb(110, 80, 55),
 		Material = Enum.Material.WoodPlanks,
 	})
+	local posts = math.max(4, math.floor(length / 14))
 	for side = -1, 1, 2 do
 		part({
 			Name = "Rail",
 			Size = Vector3.new(0.6, 1, length),
-			CFrame = cf * CFrame.new(side * (width / 2 - 0.3), 2, 0),
+			CFrame = cf * CFrame.new(side * (width / 2 - 0.3), 2.5, 0),
 			Color = WOOD,
 			Material = Enum.Material.Wood,
 		})
-		for i = -2, 2 do
+		for i = 0, posts do
 			part({
 				Name = "RailPost",
 				Size = Vector3.new(0.6, 3, 0.6),
-				CFrame = cf * CFrame.new(side * (width / 2 - 0.3), 1, i * length / 5),
+				CFrame = cf * CFrame.new(side * (width / 2 - 0.3), 1.5, (i / posts - 0.5) * length),
 				Color = WOOD,
 				Material = Enum.Material.Wood,
 			})
 		end
+	end
+	-- Piers: every ~28 studs, from the underside of the deck down to the riverbed.
+	local piers = math.max(1, math.floor(length / 28))
+	for i = 1, piers do
+		local at = cf * CFrame.new(0, 0, (i / (piers + 1) - 0.5) * length)
+		local top = at.Position.Y - 0.5
+		local depth = top + 14
+		for side = -1, 1, 2 do
+			part({
+				Name = "Pier",
+				Size = Vector3.new(3, depth, 3),
+				CFrame = CFrame.new(
+					at.Position + at.RightVector * side * (width / 2 - 1.5) - Vector3.new(0, 0.5 + depth / 2, 0)
+				),
+				Color = STONE,
+				Material = Enum.Material.Cobblestone,
+			})
+		end
+		part({
+			Name = "PierBeam",
+			Size = Vector3.new(width, 1.2, 1.6),
+			CFrame = at * CFrame.new(0, -1.1, 0),
+			Color = WOOD,
+			Material = Enum.Material.Wood,
+		})
 	end
 end
 

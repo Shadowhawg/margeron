@@ -1,6 +1,8 @@
 -- Detailed buildings made from parts: timber-framed houses, stone city walls with battlements,
 -- round towers, gatehouses, street lamps and paved streets. Used by Riverwatch, the Crown City
 -- and player homes. Everything is parented to Architecture.Folder unless a parent is given.
+local Props = require(script.Parent.Props)
+
 local Architecture = {}
 
 Architecture.Folder = nil
@@ -70,8 +72,8 @@ local function lantern(cf, parent)
 	}, parent)
 	local light = Instance.new("PointLight")
 	light.Color = rgb(255, 180, 100)
-	light.Range = 16
-	light.Brightness = 1.2
+	light.Range = 12
+	light.Brightness = 0.6
 	light.Shadows = false
 	light.Parent = glow
 end
@@ -401,19 +403,7 @@ function Architecture.House(ground, facing, opts)
 			Color = rgb(120, 85, 55),
 			Material = Enum.Material.WoodPlanks,
 		}, parent)
-		local gui = Instance.new("SurfaceGui")
-		gui.Face = Enum.NormalId.Front
-		gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-		gui.PixelsPerStud = 40
-		local label = Instance.new("TextLabel")
-		label.Size = UDim2.fromScale(1, 1)
-		label.BackgroundTransparency = 1
-		label.Font = Enum.Font.Fantasy
-		label.TextScaled = true
-		label.TextColor3 = rgb(255, 235, 200)
-		label.Text = opts.Sign
-		label.Parent = gui
-		gui.Parent = sign
+		Props.Lettering(sign, opts.Sign)
 	end
 	return base, y
 end
@@ -766,8 +756,8 @@ function Architecture.Lamp(ground, parent)
 	}, parent)
 	local light = Instance.new("PointLight")
 	light.Color = rgb(255, 185, 110)
-	light.Range = 26
-	light.Brightness = 1.4
+	light.Range = 18
+	light.Brightness = 0.7
 	light.Shadows = false
 	light.Parent = glow
 end

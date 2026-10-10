@@ -41,14 +41,36 @@ local function owns(data, item)
 		return data.Weapons[g.Weapon] == true
 	elseif g.Cosmetic then
 		return data.Cosmetics[g.Cosmetic] == true
+	elseif g.Horse then
+		return data.Property ~= nil and data.Property.Horses[g.Horse] == true
+	elseif g.Pass then
+		return data.Passes ~= nil and data.Passes[g.Pass] == true
 	end
 	return false
+end
+
+-- Which inventory tab shows a purchase (nil for gold and one-off effects).
+local function inventoryTab(item)
+	local g = item.Grant
+	if g.Weapon then
+		return "Weapons"
+	elseif g.Cosmetic then
+		return "Cosmetics"
+	elseif g.Horse or g.Pass or g.CraftBoostSeconds then
+		return "Mounts & Perks"
+	end
+	return nil
 end
 
 local function buy(item, isPass)
 	if item.Id == 0 then
 		if RunService:IsStudio() then
-			Net.Request("StudioPurchase", item.Key)
+			local result = Net.Request("StudioPurchase", item.Key)
+			local tabName = inventoryTab(item)
+			if result.ok and tabName then
+				task.wait(0.2) -- let the new save data arrive
+				InventoryPanel.Show(tabName)
+			end
 		end
 		return
 	end
@@ -80,9 +102,9 @@ local function renderStore(content)
 			if available then
 				order += 1
 				local owned = owns(data, item)
-				local label = owned and "Owned" or ("R$ " .. item.Robux)
-				if item.Id == 0 then
-					label = owned and "Owned" or "Test (free)"
+				local label = owned and "Owned · View" or ("R$ " .. item.Robux)
+				if item.Id == 0 and not owned then
+					label = "Test (free)"
 				end
 				InventoryPanel.Row(
 					list,
@@ -91,9 +113,13 @@ local function renderStore(content)
 					item.Description,
 					label,
 					owned and Theme.Border or Theme.Robux,
-					(not owned) and function()
-						buy(item, isPass)
-					end or nil
+					function()
+						if owned then
+							InventoryPanel.Show(inventoryTab(item) or "Weapons")
+						else
+							buy(item, isPass)
+						end
+					end
 				)
 			end
 		end

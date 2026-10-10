@@ -160,6 +160,12 @@ local services = {
 			return true
 		end,
 	},
+	MarketplaceService = {
+		PromptGamePassPurchaseFinished = { Connect = noop },
+		UserOwnsGamePassAsync = function()
+			return false
+		end,
+	},
 	CollectionService = {
 		GetTagged = function()
 			return {}
