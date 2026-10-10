@@ -344,9 +344,51 @@ local function updateMountPose(character)
 	end
 end
 
+-- Crouching: bend hips and knees, lower the body, lean forward. Joint C0 offsets layer on top of
+-- the normal walk animation, so sneaking still animates.
+local CROUCH_POSE = {
+	{ Part = "LowerTorso", Joint = "Root", Pose = CFrame.new(0, -0.6, 0) },
+	{ Part = "UpperTorso", Joint = "Waist", Pose = CFrame.Angles(math.rad(-18), 0, 0) },
+	{ Part = "RightUpperLeg", Joint = "RightHip", Pose = CFrame.Angles(math.rad(55), 0, 0) },
+	{ Part = "LeftUpperLeg", Joint = "LeftHip", Pose = CFrame.Angles(math.rad(55), 0, 0) },
+	{ Part = "RightLowerLeg", Joint = "RightKnee", Pose = CFrame.Angles(math.rad(-75), 0, 0) },
+	{ Part = "LeftLowerLeg", Joint = "LeftKnee", Pose = CFrame.Angles(math.rad(-75), 0, 0) },
+}
+local crouchBase = {}
+setmetatable(crouchBase, { __mode = "k" })
+
+local function updateCrouchPose(character)
+	local crouching = character:GetAttribute("Crouching") == true
+	for _, entry in ipairs(CROUCH_POSE) do
+		local p = character:FindFirstChild(entry.Part)
+		local joint = p and p:FindFirstChild(entry.Joint)
+		if joint and joint:IsA("Motor6D") then
+			local base = crouchBase[joint]
+			if not base then
+				base = joint.C0
+				crouchBase[joint] = base
+			end
+			TweenService:Create(joint, TweenInfo.new(0.25), { C0 = crouching and base * entry.Pose or base }):Play()
+		end
+	end
+	if character == player.Character then
+		local humanoid = character:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			TweenService:Create(
+				humanoid,
+				TweenInfo.new(0.25),
+				{ CameraOffset = crouching and Vector3.new(0, -1.3, 0) or Vector3.zero }
+			):Play()
+		end
+	end
+end
+
 local function watchCharacter(character)
 	character:GetAttributeChangedSignal("Mounted"):Connect(function()
 		updateMountPose(character)
+	end)
+	character:GetAttributeChangedSignal("Crouching"):Connect(function()
+		updateCrouchPose(character)
 	end)
 	updateMountPose(character)
 end

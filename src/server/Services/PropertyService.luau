@@ -9,7 +9,10 @@ local World = require(Shared.Config.World)
 local Items = require(Shared.Config.Items)
 local Remotes = require(Shared.Remotes)
 local Stats = require(Shared.Stats)
+local Clock = require(Shared.Clock)
 local Props = require(script.Parent.Parent.Lib.Props)
+local Architecture = require(script.Parent.Parent.Lib.Architecture)
+local CollectionService = game:GetService("CollectionService")
 local ModelBuilder = require(script.Parent.Parent.Lib.ModelBuilder)
 
 local PropertyService = {}
@@ -35,7 +38,7 @@ local function now()
 end
 
 local function festival()
-	return Services.GovernmentService.DecreeActive("HarvestFestival") and 1.5 or 1
+	return (Services.GovernmentService.DecreeActive("HarvestFestival") and 1.5 or 1) + Clock.HolidayBonus("Crops")
 end
 
 -- Field layout inside a plot (local offsets from the plot center).
@@ -217,6 +220,7 @@ local function buildHome(player)
 	local model = Instance.new("Model")
 	model.Name = player.Name .. "'s " .. home.Name
 	Props.Folder = model
+	Architecture.Folder = model
 	local c = plot.Center
 	local half = Property.PlotSize / 2
 
@@ -293,13 +297,16 @@ local function buildHome(player)
 			})
 		end
 	else
-		local scale = data.Property.Home == "Farmhouse" and 1.45 or 1
-		Props.House(
-			houseGround,
-			facing,
-			data.Property.Home == "Farmhouse" and rgb(170, 140, 100) or rgb(160, 130, 95),
-			scale
-		)
+		local farm = data.Property.Home == "Farmhouse"
+		Architecture.House(houseGround, facing, {
+			Width = farm and 22 or 16,
+			Depth = farm and 18 or 14,
+			Stories = farm and 2 or 1,
+			Wall = farm and rgb(230, 215, 185) or rgb(225, 205, 175),
+			Roof = farm and rgb(90, 60, 45) or rgb(120, 70, 45),
+			Base = farm and "Stone" or "Timber",
+			Parent = model,
+		})
 		if data.Property.Home == "Farmhouse" then
 			local barn = plotGround(c, Vector3.new(34, 0, -46))
 			Props.Part({
@@ -319,6 +326,17 @@ local function buildHome(player)
 		end
 	end
 	Props.Sign(plotGround(c, Vector3.new(4, 0, -half + 4)), player.DisplayName .. "'s " .. home.Name, facing)
+
+	-- Your own bed: rest for free.
+	local bed = Props.Part({
+		Name = "Bedroll",
+		Size = Vector3.new(4, 2, 7),
+		Position = houseGround + Vector3.new(-16, 0.6, 2),
+		Color = rgb(150, 50, 50),
+		Material = Enum.Material.Fabric,
+	})
+	bed:SetAttribute("Owner", player.UserId)
+	CollectionService:AddTag(bed, "RestSpot")
 
 	-- Fields
 	cropParts[player] = {}
@@ -764,6 +782,9 @@ function PropertyService.Mount(player)
 	end
 	if mounted[player] then
 		return result(true)
+	end
+	if Services.StealthService.IsCrouching(player) then
+		Services.StealthService.SetCrouch(player, false)
 	end
 	if Services.CombatService.InCombat(player) then
 		return result(false, "You can't mount up in combat.")

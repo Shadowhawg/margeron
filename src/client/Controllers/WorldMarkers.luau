@@ -245,6 +245,9 @@ local function zoneAt(position)
 	if Util.FlatDistance(position, World.Town.Position) <= World.Town.Radius then
 		return "Town", World.Town.Name, "Safe haven"
 	end
+	if Util.FlatDistance(position, World.City.Position) <= World.City.WallRadius then
+		return "City", World.City.Name, World.City.Title
+	end
 	if Util.FlatDistance(position, World.Farmlands.Position) <= World.Farmlands.Radius * 0.75 then
 		return "Farmlands", World.Farmlands.Name, "Farmland and homesteads"
 	end

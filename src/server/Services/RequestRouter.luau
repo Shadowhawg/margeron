@@ -150,6 +150,10 @@ local handlers = {
 		return Services.PropertyService.ToggleMount(player)
 	end,
 
+	SetCrouch = function(player, on)
+		return Services.StealthService.SetCrouch(player, on == true)
+	end,
+
 	-- Exploration
 	FastTravel = function(player, destination)
 		if not isString(destination) then

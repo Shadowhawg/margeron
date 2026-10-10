@@ -40,7 +40,12 @@ local function attachTo(base, folder, name, size, offset, color, material, shape
 		CanQuery = false,
 		Massless = true,
 	})
-	if shape then
+	if shape == "Ellipsoid" then
+		-- A sphere mesh stretched to the part's size: smooth, rounded hair and beards.
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = p
+	elseif shape then
 		p.Shape = shape
 	end
 	p.CFrame = base.CFrame * offset
@@ -49,28 +54,44 @@ local function attachTo(base, folder, name, size, offset, color, material, shape
 	return p
 end
 
--- Hair styles, in head space (Y up, -Z is the face). s = head scale.
+-- How big the head actually looks. Classic heads are a 2x1x1 part with a scaled mesh, so the
+-- part's Size alone is misleading.
+local function headScale(head)
+	local height = head.Size.Y
+	if not head:IsA("MeshPart") then
+		local mesh = head:FindFirstChildOfClass("SpecialMesh")
+		if mesh then
+			height = head.Size.Y * mesh.Scale.Y
+		end
+	end
+	return height / 1.2
+end
+
+-- Hair styles, in head space (Y up, -Z is the face). s = head scale (1 = a 1.2-stud head).
 local hairBuilders = {}
-local HAIR_MAT = Enum.Material.SmoothPlastic
+local HAIR = Enum.Material.SmoothPlastic
+local E = "Ellipsoid"
 
 local function cap(head, folder, s, color)
 	attachTo(
 		head,
 		folder,
 		"HairCap",
-		Vector3.new(1.3, 0.45, 1.3) * s,
-		CFrame.new(0, 0.5 * s, 0.05 * s),
+		Vector3.new(1.34, 0.95, 1.36) * s,
+		CFrame.new(0, 0.3 * s, 0.06 * s),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
 	attachTo(
 		head,
 		folder,
 		"HairBack",
-		Vector3.new(1.3, 0.8, 0.32) * s,
-		CFrame.new(0, 0.18 * s, 0.56 * s),
+		Vector3.new(1.3, 1.05, 0.75) * s,
+		CFrame.new(0, 0.04 * s, 0.36 * s),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
 end
 
@@ -81,10 +102,11 @@ function hairBuilders.Swept(head, folder, s, color)
 		head,
 		folder,
 		"HairFront",
-		Vector3.new(1.2, 0.35, 0.7) * s,
-		CFrame.new(0, 0.7 * s, -0.25 * s) * CFrame.Angles(math.rad(15), 0, 0),
+		Vector3.new(1.15, 0.45, 0.85) * s,
+		CFrame.new(0, 0.62 * s, -0.18 * s) * CFrame.Angles(math.rad(18), 0, 0),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
 end
 function hairBuilders.Long(head, folder, s, color)
@@ -93,20 +115,22 @@ function hairBuilders.Long(head, folder, s, color)
 		head,
 		folder,
 		"HairLong",
-		Vector3.new(1.3, 2.1, 0.3) * s,
-		CFrame.new(0, -0.5 * s, 0.62 * s),
+		Vector3.new(1.25, 2.1, 0.5) * s,
+		CFrame.new(0, -0.62 * s, 0.48 * s),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
 	for side = -1, 1, 2 do
 		attachTo(
 			head,
 			folder,
 			"HairSide",
-			Vector3.new(0.22, 1.5, 0.7) * s,
-			CFrame.new(side * 0.66 * s, -0.15 * s, 0.15 * s),
+			Vector3.new(0.3, 1.5, 0.75) * s,
+			CFrame.new(side * 0.6 * s, -0.25 * s, 0.12 * s),
 			color,
-			HAIR_MAT
+			HAIR,
+			E
 		)
 	end
 end
@@ -115,11 +139,22 @@ function hairBuilders.Ponytail(head, folder, s, color)
 	attachTo(
 		head,
 		folder,
+		"Tie",
+		Vector3.new(0.3, 0.3, 0.3) * s,
+		CFrame.new(0, 0.15 * s, 0.7 * s),
+		color:Lerp(Color3.new(0, 0, 0), 0.4),
+		HAIR,
+		E
+	)
+	attachTo(
+		head,
+		folder,
 		"Tail",
-		Vector3.new(0.38, 1.5, 0.38) * s,
-		CFrame.new(0, -0.15 * s, 0.85 * s) * CFrame.Angles(math.rad(-15), 0, 0),
+		Vector3.new(0.38, 1.4, 0.38) * s,
+		CFrame.new(0, -0.45 * s, 0.82 * s) * CFrame.Angles(math.rad(-12), 0, 0),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
 end
 function hairBuilders.Braids(head, folder, s, color)
@@ -129,35 +164,28 @@ function hairBuilders.Braids(head, folder, s, color)
 			head,
 			folder,
 			"Braid",
-			Vector3.new(0.32, 1.7, 0.32) * s,
-			CFrame.new(side * 0.58 * s, -0.65 * s, 0.1 * s),
+			Vector3.new(0.3, 1.6, 0.3) * s,
+			CFrame.new(side * 0.55 * s, -0.75 * s, 0.12 * s),
 			color,
-			HAIR_MAT
+			HAIR,
+			E
 		)
 	end
 end
 function hairBuilders.Topknot(head, folder, s, color)
 	cap(head, folder, s, color)
-	attachTo(
-		head,
-		folder,
-		"Bun",
-		Vector3.new(0.65, 0.65, 0.65) * s,
-		CFrame.new(0, 0.9 * s, 0.2 * s),
-		color,
-		HAIR_MAT,
-		Enum.PartType.Ball
-	)
+	attachTo(head, folder, "Bun", Vector3.new(0.62, 0.62, 0.62) * s, CFrame.new(0, 0.82 * s, 0.18 * s), color, HAIR, E)
 end
 function hairBuilders.Mohawk(head, folder, s, color)
 	attachTo(
 		head,
 		folder,
 		"Mohawk",
-		Vector3.new(0.25, 0.7, 1.35) * s,
-		CFrame.new(0, 0.8 * s, 0.05 * s),
+		Vector3.new(0.28, 0.7, 1.35) * s,
+		CFrame.new(0, 0.62 * s, 0.06 * s),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
 end
 function hairBuilders.Wild(head, folder, s, color)
@@ -168,37 +196,41 @@ function hairBuilders.Wild(head, folder, s, color)
 			head,
 			folder,
 			"Spike",
-			Vector3.new(0.32, 0.7, 0.32) * s,
-			CFrame.new(math.cos(a) * 0.45 * s, 0.75 * s, math.sin(a) * 0.45 * s)
-				* CFrame.Angles(math.sin(a) * 0.6, 0, -math.cos(a) * 0.6),
+			Vector3.new(0.32, 0.75, 0.32) * s,
+			CFrame.new(math.cos(a) * 0.42 * s, 0.68 * s, math.sin(a) * 0.42 * s)
+				* CFrame.Angles(math.sin(a) * 0.7, 0, -math.cos(a) * 0.7),
 			color,
-			HAIR_MAT
+			HAIR,
+			E
 		)
 	end
 end
 
+-- Beards wrap the lower half of the face (chin at about y = -0.45, face surface at z = -0.6).
 local beardBuilders = {}
 function beardBuilders.Stubble(head, folder, s, color)
 	local p = attachTo(
 		head,
 		folder,
 		"Stubble",
-		Vector3.new(1, 0.45, 0.06) * s,
-		CFrame.new(0, -0.38 * s, -0.61 * s),
+		Vector3.new(1.06, 0.55, 1.0) * s,
+		CFrame.new(0, -0.3 * s, -0.04 * s),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
-	p.Transparency = 0.35
+	p.Transparency = 0.45
 end
 function beardBuilders.Short(head, folder, s, color)
 	attachTo(
 		head,
 		folder,
 		"Beard",
-		Vector3.new(1.05, 0.55, 0.35) * s,
-		CFrame.new(0, -0.45 * s, -0.5 * s),
+		Vector3.new(1.02, 0.62, 0.78) * s,
+		CFrame.new(0, -0.4 * s, -0.2 * s),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
 end
 function beardBuilders.Full(head, folder, s, color)
@@ -206,19 +238,21 @@ function beardBuilders.Full(head, folder, s, color)
 		head,
 		folder,
 		"Beard",
-		Vector3.new(1.15, 0.95, 0.45) * s,
-		CFrame.new(0, -0.6 * s, -0.45 * s),
+		Vector3.new(1.1, 0.95, 0.82) * s,
+		CFrame.new(0, -0.55 * s, -0.2 * s),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
 	attachTo(
 		head,
 		folder,
 		"Moustache",
-		Vector3.new(0.7, 0.15, 0.12) * s,
-		CFrame.new(0, -0.15 * s, -0.66 * s),
+		Vector3.new(0.62, 0.15, 0.2) * s,
+		CFrame.new(0, -0.14 * s, -0.58 * s),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
 end
 function beardBuilders.Braided(head, folder, s, color)
@@ -227,10 +261,11 @@ function beardBuilders.Braided(head, folder, s, color)
 		head,
 		folder,
 		"BeardBraid",
-		Vector3.new(0.3, 1, 0.3) * s,
-		CFrame.new(0, -1.3 * s, -0.55 * s),
+		Vector3.new(0.28, 0.9, 0.28) * s,
+		CFrame.new(0, -1.12 * s, -0.42 * s),
 		color,
-		HAIR_MAT
+		HAIR,
+		E
 	)
 end
 
@@ -239,7 +274,7 @@ local function attachFeatures(character, folder, appearance)
 	if not head then
 		return
 	end
-	local s = head.Size.Y / 1.2
+	local s = headScale(head)
 	local race = Races.Races[appearance.Race] or Races.Races.Riverfolk
 	local hairColor = Races.HairColors[appearance.HairColor] or Races.HairColors[1]
 	local skin = race.SkinTones[appearance.SkinTone] or race.SkinTones[1]
@@ -260,10 +295,12 @@ local function attachFeatures(character, folder, appearance)
 					head,
 					folder,
 					"Ear",
-					Vector3.new(0.14, 0.75, 0.32) * s,
-					CFrame.new(side * 0.66 * s, 0.25 * s, 0.05 * s)
+					Vector3.new(0.14, 0.7, 0.3) * s,
+					CFrame.new(side * 0.62 * s, 0.2 * s, 0.05 * s)
 						* CFrame.Angles(math.rad(-20), 0, math.rad(-side * 28)),
-					skin
+					skin,
+					nil,
+					E
 				)
 			end
 		elseif feature == "Tusks" then
@@ -272,9 +309,11 @@ local function attachFeatures(character, folder, appearance)
 					head,
 					folder,
 					"Tusk",
-					Vector3.new(0.12, 0.32, 0.12) * s,
-					CFrame.new(side * 0.26 * s, -0.4 * s, -0.62 * s),
-					Color3.fromRGB(240, 235, 215)
+					Vector3.new(0.1, 0.3, 0.1) * s,
+					CFrame.new(side * 0.24 * s, -0.36 * s, -0.56 * s) * CFrame.Angles(0, 0, math.rad(side * 10)),
+					Color3.fromRGB(240, 235, 215),
+					nil,
+					E
 				)
 			end
 		elseif feature == "EmberEyes" then
@@ -284,9 +323,10 @@ local function attachFeatures(character, folder, appearance)
 					folder,
 					"EmberEye",
 					Vector3.new(0.16, 0.1, 0.05) * s,
-					CFrame.new(side * 0.2 * s, 0.12 * s, -0.61 * s),
+					CFrame.new(side * 0.2 * s, 0.12 * s, -0.6 * s),
 					Color3.fromRGB(255, 130, 40),
-					Enum.Material.Neon
+					Enum.Material.Neon,
+					E
 				)
 				eye.CastShadow = false
 			end

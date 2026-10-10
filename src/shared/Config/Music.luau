@@ -14,6 +14,8 @@ return {
 		Prologue = { Id = 0, Volume = 0.6, Fallback = "Wilds" }, -- haunting, sparse (opening + memories)
 		Echo = { Id = 0, Volume = 0.6, Fallback = "Prologue" },
 		Town = { Id = 0, Volume = 0.45, Fallback = "Wilds" }, -- warm village theme
+		City = { Id = 0, Volume = 0.5, Fallback = "Town" }, -- grand, regal (Aurelion)
+		Night = { Id = 0, Volume = 0.4, Fallback = "Wilds" }, -- quiet nocturne for the wilds after dark
 		Farmlands = { Id = 0, Volume = 0.45, Fallback = "Town" }, -- pastoral, lute/flute
 		Wilds = { Id = 0, Volume = 0.4 }, -- open-world exploration
 		Forest = { Id = 0, Volume = 0.4, Fallback = "Wilds" },

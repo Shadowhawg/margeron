@@ -231,8 +231,10 @@ for id, m in pairs(Items.Materials) do
 		end
 	end
 end
-for effectId in pairs(Crafting.Effects) do
-	check((effectCount[effectId] or 0) >= 2, "effect is brewable " .. effectId)
+for effectId, effect in pairs(Crafting.Effects) do
+	if not effect.Special then
+		check((effectCount[effectId] or 0) >= 2, "effect is brewable " .. effectId)
+	end
 end
 -- Potion mixing
 local fx = CraftingRules.SharedEffects({ "Moonpetal", "Bloodthistle" })
@@ -352,6 +354,39 @@ local tempered = {
 local ts = Stats.Compute(tempered)
 check(math.abs(ts.WeaponDamage - 12 * 1.16) < 0.01, "temper adds damage")
 check(math.abs(ts.Lifesteal - 0.05) < 1e-6, "vampiric infusion lifesteal")
+
+-- Calendar and clock
+local Calendar = require(Shared.Config.Calendar)
+local Clock = require(Shared.Clock)
+local d0 = Clock.Date(0)
+check(
+	d0.Year == Calendar.BaseYear and d0.Month == 1 and d0.Day == 1 and d0.Weekday == Calendar.Weekdays[1],
+	"calendar day zero"
+)
+local last = Clock.Date(#Calendar.Months * Calendar.DaysPerMonth - 1)
+check(last.MonthName == "Longnight" and last.Day == 30 and last.Year == Calendar.BaseYear, "last day of the year")
+check(Clock.Date(#Calendar.Months * Calendar.DaysPerMonth).Year == Calendar.BaseYear + 1, "year rolls over")
+check(Clock.FormatDate(0):find("1st of Frostwane") ~= nil, "date formatting: " .. Clock.FormatDate(0))
+check(Clock.FormatDate(1):find("2nd") ~= nil and Clock.FormatDate(10):find("11th") ~= nil, "ordinals")
+for _, holiday in ipairs(Calendar.Holidays) do
+	check(
+		holiday.Month >= 1
+			and holiday.Month <= #Calendar.Months
+			and holiday.Day >= 1
+			and holiday.Day <= Calendar.DaysPerMonth,
+		"holiday date valid " .. holiday.Name
+	)
+	local dayIndex = (holiday.Month - 1) * Calendar.DaysPerMonth + holiday.Day - 1
+	check(Clock.Holiday(dayIndex) == holiday, "holiday lookup " .. holiday.Name)
+end
+Clock.Start()
+check(math.abs(Clock.Hour() - Calendar.StartHour) < 0.01, "server opens at the start hour")
+check(Clock.IsNight(), "servers open at night")
+advanceTime(Calendar.DaySeconds / 2)
+check(not Clock.IsNight(), "half a day later it is daytime")
+local before = Clock.DayIndex()
+advanceTime(Calendar.DaySeconds)
+check(Clock.DayIndex() == before + 1, "a full day advances the date")
 
 print("Sample bounties:")
 for _, level in ipairs({ 1, 4, 8, 15 }) do

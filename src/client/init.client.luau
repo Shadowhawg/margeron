@@ -10,9 +10,11 @@ local Controllers = script.Controllers
 local Panels = script.Panels
 
 local modules = {
+	require(Controllers.Loading),
 	require(Controllers.Notifications),
 	require(Controllers.Windows),
 	require(Controllers.Cinematic),
+	require(Controllers.DayNight),
 	require(Controllers.HUD),
 	require(Controllers.Effects),
 	require(Controllers.Dialogue),

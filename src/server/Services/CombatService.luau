@@ -61,6 +61,11 @@ local function hit(player, e, baseDamage, kind)
 	if stats.BackstabBonus > 0 and e.Target ~= player then
 		damage *= 1 + stats.BackstabBonus
 	end
+	-- Sneak attack: crouched and the enemy hasn't noticed you.
+	if Services.StealthService.IsCrouching(player) and e.Target == nil then
+		damage *= Services.StealthService.SneakAttackMultiplier
+		Remotes.Effect:FireClient(player, "Text", "Sneak attack! x" .. Services.StealthService.SneakAttackMultiplier)
+	end
 
 	local crit = false
 	if (empoweredUntil[player] or 0) > os.clock() then

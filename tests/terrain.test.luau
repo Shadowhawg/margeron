@@ -33,7 +33,12 @@ local World = mod("Shared/Config/World")
 local Property = mod("Shared/Config/Property")
 local TerrainGen = mod("Server/Lib/TerrainGen")
 
-local positions = { Town = World.Town.Position, Farmlands = World.Farmlands.Position }
+local positions = {
+	Town = World.Town.Position,
+	Farmlands = World.Farmlands.Position,
+	City = World.City.Position,
+	CityApproach = World.City.Approach,
+}
 for zoneId, zone in pairs(World.Zones) do
 	positions[zoneId] = zone.Position
 end
@@ -89,6 +94,16 @@ for _, lake in ipairs(World.Lakes) do
 		check(TerrainGen.IsWater(lake.Position.X, lake.Position.Z), lake.Name .. " has water")
 	end
 end
+-- The Crown City island is flat and surrounded by water.
+local city = World.City
+check(math.abs(TerrainGen.HeightAt(city.Position.X, city.Position.Z) - city.Height) < 0.5, "city plateau height")
+for _, dir in ipairs({ Vector3.new(1, 0, 0), Vector3.new(-1, 0, 0), Vector3.new(0, 0, 1), Vector3.new(0, 0, -1) }) do
+	local edge = city.Position + dir * (city.WallRadius + 10)
+	check(math.abs(TerrainGen.HeightAt(edge.X, edge.Z) - city.Height) < 0.5, "city flat out to the walls")
+	local lake = city.Position + dir * ((city.IslandRadius + city.LakeRadius) / 2 + 20)
+	check(TerrainGen.IsWater(lake.X, lake.Z), "water around the city")
+end
+above(city.Approach, "causeway start")
 local peak = TerrainGen.HeightAt(World.Volcano.Position.X, World.Volcano.Position.Z)
 check(math.abs(peak - World.Volcano.Height) < 1, "volcano summit height")
 check(waterCells > 0, "water voxels written")

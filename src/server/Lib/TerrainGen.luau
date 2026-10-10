@@ -96,6 +96,18 @@ local function shapedHeight(x, z)
 	if dz < river.Width + 34 then
 		h = lerp(h, -7, smoothstep(river.Width + 34, river.Width * 0.5, dz))
 	end
+
+	-- The Crown City: a lake (the river flows into it) with a flat island plateau.
+	local city = World.City
+	if city then
+		local dc = flatDist(x, z, city.Position)
+		if dc < city.LakeRadius + 50 then
+			h = lerp(h, -12, smoothstep(city.LakeRadius + 50, city.LakeRadius - 20, dc))
+			if dc < city.IslandRadius + 30 then
+				h = lerp(h, city.Height, smoothstep(city.IslandRadius + 30, city.IslandRadius, dc))
+			end
+		end
+	end
 	return h
 end
 
@@ -214,6 +226,10 @@ function TerrainGen.Generate(positions, onProgress)
 		end
 	end
 	table.insert(paint, { X = town.Position.X, Z = town.Position.Z, Radius = 60, Material = M.Cobblestone })
+	if World.City then
+		local c = World.City.Position
+		table.insert(paint, 1, { X = c.X, Z = c.Z, Radius = World.City.IslandRadius - 8, Material = M.Pavement })
+	end
 
 	for _, road in ipairs(World.Roads) do
 		local a, b = positions[road.From], positions[road.To]

@@ -82,6 +82,16 @@ Crafting.Effects = {
 		Description = "+{m} experience",
 	},
 	Vigor = { Name = "Vigor", Stat = "MaxHealth", Base = 25, Duration = 300, Description = "+{m} max health" },
+	-- Not brewable: granted by resting at an inn or at home.
+	Rested = {
+		Name = "Well Rested",
+		Stat = "XPBonus",
+		Base = 0.1,
+		Duration = 1800,
+		Percent = true,
+		Special = true,
+		Description = "+{m} experience",
+	},
 }
 
 -- Potency tier from crafting level (and the Master Artisan pass).

@@ -120,6 +120,17 @@ A new decree needs its effect implemented where it applies (search for `DecreeAc
 Wreck, Colossus, Mine, Arch), lakes, the river, the volcano, roads and NPCs. `tests/run.sh` checks
 that everything lands on dry land after you move things around.
 
+## Calendar and night
+
+`Config/Calendar.luau`: day length, the hour servers open at, night hours, month and weekday names,
+the era, holidays (with their bonuses) and night modifiers.
+
+## Buildings
+
+`server/Lib/Architecture.luau` builds the timber-framed houses, stone walls, towers, gatehouses,
+lamps, streets, market stalls and fountains; reuse it for new towns.
+`server/Lib/CrownCity.luau` lays out Aurelion (positions are in "city space" with the gate at -X).
+
 ## Balance knobs
 
 `Config/GameConfig.luau`: XP curve inputs, health per level, respec cost, bounty board size and

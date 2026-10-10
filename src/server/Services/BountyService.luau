@@ -163,14 +163,22 @@ local function hasActiveDaily(data)
 	return false
 end
 
+-- Any notice board counts (Riverwatch's or the Crown City's).
 local function isNearBoard(player)
 	local _, character = Services.PlayerService.GetHumanoid(player)
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if not root then
 		return false
 	end
-	local position = Services.WorldService.GetNPCPosition("Board")
-	return Util.FlatDistance(root.Position, position) <= GameConfig.NPCInteractDistance + 6
+	for npcId, npc in pairs(World.NPCs) do
+		if npcId == "Board" or npc.Alias == "Board" then
+			local position = Services.WorldService.GetNPCPosition(npcId)
+			if Util.FlatDistance(root.Position, position) <= GameConfig.NPCInteractDistance + 6 then
+				return true
+			end
+		end
+	end
+	return false
 end
 
 function BountyService.GetBoard(player)

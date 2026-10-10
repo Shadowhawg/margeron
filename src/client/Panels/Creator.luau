@@ -310,7 +310,7 @@ function Creator.Open(isFirstTime)
 	Creator.Open_ = true
 	camera.CameraType = Enum.CameraType.Scriptable
 	local playerGui = player:FindFirstChild("PlayerGui")
-	for _, name in ipairs({ "HUD", "Windows" }) do
+	for _, name in ipairs({ "HUD", "Windows", "Clock" }) do
 		local other = playerGui and playerGui:FindFirstChild(name)
 		if other then
 			other.Enabled = false
@@ -323,8 +323,12 @@ function Creator.Close()
 	gui.Enabled = false
 	Creator.Open_ = false
 	camera.CameraType = Enum.CameraType.Custom
+	local humanoid = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		camera.CameraSubject = humanoid
+	end
 	local playerGui = player:FindFirstChild("PlayerGui")
-	for _, name in ipairs({ "HUD", "Windows" }) do
+	for _, name in ipairs({ "HUD", "Windows", "Clock" }) do
 		local other = playerGui and playerGui:FindFirstChild(name)
 		if other then
 			other.Enabled = true

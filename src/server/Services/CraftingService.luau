@@ -325,6 +325,54 @@ function CraftingService.Use(player, key)
 	return result(true, (info.Kind == "Food" and "Ate " or "Drank ") .. info.Name .. ".")
 end
 
+-- Sleep at an inn (for gold) or at home (free): full health and the Well Rested buff.
+function CraftingService.Rest(player, cost)
+	local data = Services.PlayerService.GetData(player)
+	local humanoid = Services.PlayerService.GetHumanoid(player)
+	if not data or not humanoid then
+		return
+	end
+	if Services.CombatService.InCombat(player) then
+		Services.PlayerService.Notify(player, "You can't rest with enemies nearby.", "Error")
+		return
+	end
+	if cost > 0 and not Services.PlayerService.SpendGold(player, cost) then
+		Services.PlayerService.Notify(player, "A bed costs " .. cost .. " gold.", "Error")
+		return
+	end
+	local rested = Crafting.Effects.Rested
+	data.Buffs.Rested = { Until = now() + rested.Duration, Magnitude = rested.Base }
+	Services.PlayerService.RefreshStats(player)
+	humanoid.Health = humanoid.MaxHealth
+	Services.PlayerService.Notify(
+		player,
+		"You rest and wake refreshed. Well Rested: +10% experience for 30 minutes.",
+		"Success"
+	)
+end
+
+local function setupRestSpot(part)
+	if not part:IsA("BasePart") or part:FindFirstChildOfClass("ProximityPrompt") then
+		return
+	end
+	local cost = part:GetAttribute("Cost") or 0
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ActionText = "Rest"
+	prompt.ObjectText = cost > 0 and ("Bed (" .. cost .. " gold)") or "Your bed"
+	prompt.HoldDuration = 0.5
+	prompt.MaxActivationDistance = 10
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = part
+	prompt.Triggered:Connect(function(player)
+		local owner = part:GetAttribute("Owner")
+		if owner and owner ~= player.UserId then
+			Services.PlayerService.Notify(player, "That's someone else's bed.", "Error")
+			return
+		end
+		CraftingService.Rest(player, cost)
+	end)
+end
+
 -- Buff upkeep: regeneration ticks and expiry.
 local function tickBuffs()
 	local t = now()
@@ -382,6 +430,12 @@ function CraftingService.Start()
 	end
 	CollectionService:GetInstanceAddedSignal("CraftingStation"):Connect(function(model)
 		task.defer(setupStation, model)
+	end)
+	for _, part in ipairs(CollectionService:GetTagged("RestSpot")) do
+		setupRestSpot(part)
+	end
+	CollectionService:GetInstanceAddedSignal("RestSpot"):Connect(function(part)
+		task.defer(setupRestSpot, part)
 	end)
 	while true do
 		task.wait(1)

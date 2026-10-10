@@ -119,9 +119,15 @@ local function buildDialogue(player, npcId, completed)
 		table.insert(options, { Id = "quest:" .. questId, Label = label })
 	end
 
+	if npc.Shop then
+		table.insert(options, { Id = "shop", Label = "Show me your wares." })
+	end
+	if npc.RestCost then
+		table.insert(options, { Id = "rest", Label = "I'd like a bed. (" .. npc.RestCost .. " gold)" })
+	end
 	if npcId == "Blacksmith" then
 		table.insert(options, { Id = "shop", Label = "Show me your wares." })
-	elseif npcId == "Board" then
+	elseif npcId == "Board" or npc.Alias == "Board" then
 		table.insert(options, { Id = "board", Label = "Read the notices." })
 	elseif npcId == "Mystic" then
 		local cost = Services.SkillService.RespecCost(data)
@@ -183,7 +189,8 @@ function NPCService.Talk(player, npcId)
 			CFrame.lookAt(pivot.Position, Vector3.new(playerRoot.Position.X, pivot.Position.Y, playerRoot.Position.Z))
 		)
 	end
-	local completed = Services.QuestService.OnTalk(player, npcId)
+	-- Some NPCs stand in for another (the city's notice board is also "the Bounty Board").
+	local completed = Services.QuestService.OnTalk(player, World.NPCs[npcId].Alias or npcId)
 	Remotes.Dialogue:FireClient(player, buildDialogue(player, npcId, completed))
 end
 
@@ -227,9 +234,13 @@ function NPCService.Choose(player, npcId, optionId)
 		return { close = true, message = result.message }
 	end
 
-	if optionId == "shop" and npcId == "Blacksmith" then
-		return { open = "Blacksmith" }
-	elseif optionId == "board" and npcId == "Board" then
+	local npc = World.NPCs[npcId]
+	if optionId == "shop" and (npcId == "Blacksmith" or npc.Shop) then
+		return { open = npc.Shop or "Blacksmith" }
+	elseif optionId == "rest" and npc.RestCost then
+		Services.CraftingService.Rest(player, npc.RestCost)
+		return { close = true }
+	elseif optionId == "board" and (npcId == "Board" or npc.Alias == "Board") then
 		return { open = "Board", board = Services.BountyService.GetBoard(player) }
 	elseif optionId == "respec" and npcId == "Mystic" then
 		local result = Services.SkillService.Respec(player)

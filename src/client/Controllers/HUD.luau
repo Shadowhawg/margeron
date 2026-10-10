@@ -322,6 +322,43 @@ function HUD.IsOnCooldown(abilityId)
 	return cd ~= nil and os.clock() < cd.Ends
 end
 
+local stealthLabel
+local function buildStealth()
+	stealthLabel = Create.Label("", {
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -96),
+		Size = UDim2.fromOffset(220, 26),
+		Font = Theme.BoldFont,
+		TextSize = 18,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextStrokeTransparency = 0.4,
+		Visible = false,
+		Parent = gui,
+	})
+end
+
+-- While sneaking: "Hidden" unless some enemy is targeting you.
+local function updateStealth()
+	local character = player.Character
+	local crouching = character and character:GetAttribute("Crouching") == true
+	stealthLabel.Visible = crouching == true
+	if not crouching then
+		return
+	end
+	local detected = false
+	local folder = workspace:FindFirstChild("Enemies")
+	if folder then
+		for _, model in ipairs(folder:GetChildren()) do
+			if model:GetAttribute("TargetUserId") == player.UserId then
+				detected = true
+				break
+			end
+		end
+	end
+	stealthLabel.Text = detected and "◉  DETECTED" or "◎  HIDDEN"
+	stealthLabel.TextColor3 = detected and Theme.Bad or Theme.Good
+end
+
 local buffFrame
 local function buildBuffs()
 	buffFrame = New("Frame", {
@@ -373,6 +410,7 @@ end
 function HUD.Init()
 	gui = Create.Screen("HUD", 1)
 	buildBuffs()
+	buildStealth()
 	buildVitals()
 	buildHotbar()
 	buildQuestTracker()
@@ -385,6 +423,12 @@ function HUD.Start()
 		while true do
 			renderBuffs()
 			task.wait(1)
+		end
+	end)
+	task.spawn(function()
+		while true do
+			updateStealth()
+			task.wait(0.25)
 		end
 	end)
 

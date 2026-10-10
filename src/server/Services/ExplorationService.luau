@@ -9,6 +9,8 @@ local Items = require(Shared.Config.Items)
 local GameConfig = require(Shared.Config.GameConfig)
 local Remotes = require(Shared.Remotes)
 local Util = require(Shared.Util)
+local Clock = require(Shared.Clock)
+local Calendar = require(Shared.Config.Calendar)
 
 local ExplorationService = {}
 local Services
@@ -42,6 +44,13 @@ local function buildDiscoverables()
 		Position = World.Farmlands.Position,
 		Radius = World.Farmlands.Radius * 0.6,
 		XP = 40,
+	})
+	table.insert(discoverables, {
+		Id = "Region:City",
+		Name = World.City.Name .. ", " .. World.City.Title,
+		Position = World.City.Position,
+		Radius = World.City.WallRadius,
+		XP = 150,
 	})
 end
 
@@ -119,6 +128,14 @@ local function setupNode(node)
 		node:SetAttribute("Depleted", true)
 		setNodeVisible(node, false)
 		local amount = math.random(1, isOre and 2 or 3)
+		if not isOre then
+			-- Holidays can double herbs; Moonpetal is twice as plentiful at night.
+			local bonus = 1 + Clock.HolidayBonus("Gather")
+			if resource == "Moonpetal" and Clock.IsNight() then
+				bonus += Calendar.Night.Moonpetal
+			end
+			amount = math.floor(amount * bonus + 0.5)
+		end
 		Services.InventoryService.AddMaterial(player, resource, amount)
 		Remotes.Effect:FireClient(player, "Loot", node.PrimaryPart.Position, "+" .. amount .. " " .. def.Name)
 		Services.QuestService.OnEvent(player, "Gather")

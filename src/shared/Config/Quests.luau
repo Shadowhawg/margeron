@@ -34,6 +34,9 @@ return {
 		"SQ_Civic",
 		"SQ_Forge",
 		"SQ_Trolls",
+		"SQ_Crown",
+		"SQ_Writ",
+		"SQ_Sentinels",
 	},
 
 	MQ1 = {
@@ -266,6 +269,57 @@ return {
 			Offer = "My visions need fuel, and nothing burns like troll fat. Frosthollow, far to the northwest. Mind the claws.",
 			Progress = "The visions grow dim without fuel.",
 			Complete = "Pungent. Perfect. I see the mountain now. The Mother turns in her sleep, and she says your old name. Return when you're ready to hear it.",
+		},
+	},
+
+	SQ_Crown = {
+		Name = "The Crown City",
+		Type = "Side",
+		Giver = "Elder",
+		TurnIn = "Chancellor",
+		LevelReq = 3,
+		Requires = { "MQ2" },
+		Description = "Elder Maren wants word of the ash sent to the Royal Court in Aurelion, the Crown City across the eastern lake.",
+		Objectives = {
+			{ Kind = "Talk", Target = "Chancellor", Count = 1, Text = "Speak with Chancellor Aurelia in Aurelion" },
+		},
+		Rewards = { XP = 350, Gold = 150 },
+		Dialogue = {
+			Offer = "The Crown should know what's stirring under Cinder Peak. Take the east road past the Stones of Ael and over the causeway to Aurelion. Ask for the Chancellor. Try not to stare at the Tower.",
+			Progress = "Aurelion lies east, past the Stones of Ael. Follow the road to the causeway.",
+			Complete = "Ash on the wind, the dead walking, and a stranger with no past carrying the news. The Court will want to know more about you. For now, the city's gates are open to you.",
+		},
+	},
+	SQ_Writ = {
+		Name = "The Chancellor's Writ",
+		Type = "Side",
+		Giver = "Chancellor",
+		TurnIn = "Chancellor",
+		LevelReq = 7,
+		Requires = { "SQ_Crown" },
+		Description = "Bog Lurkers are dragging travelers off the Mirelake road. The Crown wants it cleared.",
+		Objectives = { { Kind = "Kill", Target = "BogLurker", Count = 6, Text = "Cull Bog Lurkers in Mirelake Marsh" } },
+		Rewards = { XP = 900, Gold = 300 },
+		Dialogue = {
+			Offer = "The Mirelake road feeds this city. Lately it feeds the Bog Lurkers instead. Thin them out and the Crown will remember it.",
+			Progress = "The marsh is south-east of here. Bring a torch. Bring two.",
+			Complete = "The road is quiet again. The Crown pays its debts. Here.",
+		},
+	},
+	SQ_Sentinels = {
+		Name = "Stone Sentinels",
+		Type = "Side",
+		Giver = "Archmage",
+		TurnIn = "Archmage",
+		LevelReq = 12,
+		Requires = { "SQ_Crown" },
+		Description = "Archmage Selene wants the cores of the Ruin Sentinels for study.",
+		Objectives = { { Kind = "Collect", Target = "SentinelCore", Count = 2, Text = "Collect Sentinel Cores" } },
+		Rewards = { XP = 1600, Gold = 400 },
+		Dialogue = {
+			Offer = "The Sentinels of Vael were built by people who knew how to bind things that should not be bound. Sound familiar? Bring me two of their cores.",
+			Progress = "The Ruins of Vael are far to the west. The Sentinels won't come quietly.",
+			Complete = "Remarkable. The binding glyphs match the ones on Cinder Peak. Whoever sealed the Mother learned it from Vael. Whoever... or should I say you?",
 		},
 	},
 }

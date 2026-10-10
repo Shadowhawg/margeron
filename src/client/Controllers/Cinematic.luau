@@ -25,7 +25,7 @@ local gui, topBar, bottomBar, fade, titleCard, speakerLabel, lineLabel, skipButt
 local advanceSignal = Instance.new("BindableEvent")
 local skipRequested = false
 local lineId = 0 -- each ShowLine call gets an id; starting a new line ends the old one
-local HIDDEN_GUIS = { "HUD", "Windows" }
+local HIDDEN_GUIS = { "HUD", "Windows", "Clock" }
 
 local function setControls(enabled)
 	pcall(function()
@@ -76,12 +76,7 @@ function Cinematic.Exit()
 	TweenService:Create(topBar, TweenInfo.new(0.4), { Size = UDim2.fromScale(1, 0) }):Play()
 	local t = TweenService:Create(bottomBar, TweenInfo.new(0.4), { Size = UDim2.fromScale(1, 0) })
 	t:Play()
-	camera.CameraType = Enum.CameraType.Custom
-	local character = player.Character
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		camera.CameraSubject = humanoid
-	end
+	Cinematic.RestoreCamera()
 	setControls(true)
 	setOtherGuis(true)
 	task.delay(0.45, function()
@@ -89,6 +84,16 @@ function Cinematic.Exit()
 			gui.Enabled = false
 		end
 	end)
+end
+
+-- Hand the camera back to the player (follow camera on their humanoid).
+function Cinematic.RestoreCamera()
+	camera.CameraType = Enum.CameraType.Custom
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		camera.CameraSubject = humanoid
+	end
 end
 
 function Cinematic.Fade(toBlack, duration)
@@ -281,10 +286,11 @@ function Cinematic.Play(cutsceneId)
 	end
 
 	Cinematic.ClearLine()
-	Cinematic.Exit()
-	Cinematic.Fade(false, 0.8)
+	-- Release the camera BEFORE exiting: the RenderStepped guard below re-takes it while Playing is true.
 	Cinematic.Playing = false
 	Cinematic.CurrentMusic = nil
+	Cinematic.Exit()
+	Cinematic.Fade(false, 0.8)
 end
 
 function Cinematic.Init()
@@ -415,9 +421,17 @@ function Cinematic.Init()
 		end
 	end)
 
+	-- A new character always gets a normal follow camera (unless a cutscene is running).
+	player.CharacterAdded:Connect(function(character)
+		character:WaitForChild("Humanoid")
+		if not Cinematic.Active then
+			Cinematic.RestoreCamera()
+		end
+	end)
+
 	-- Keep the camera scripted while a cutscene runs (the default camera scripts try to reclaim it).
 	RunService.RenderStepped:Connect(function()
-		if Cinematic.Playing and camera.CameraType ~= Enum.CameraType.Scriptable then
+		if Cinematic.Playing and Cinematic.Active and camera.CameraType ~= Enum.CameraType.Scriptable then
 			camera.CameraType = Enum.CameraType.Scriptable
 		end
 	end)

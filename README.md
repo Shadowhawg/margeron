@@ -14,6 +14,10 @@ an endless supply of procedurally generated bounties.
 | Cinematic story: prologue, five memory cutscenes ("Echoes"), cutscene-style NPC conversations | ✅ |
 | Character creation: 6 races (each with a bonus), gender, height, build, skin, 9 hair styles, beards, outfits | ✅ |
 | Open world (3,600 × 3,600 studs): hills, mountains, volcano, river, lakes, forests, 8 regions, 12 landmarks | ✅ |
+| Aurelion, the Crown City: island capital with walls, causeway, White Tower, palace, market, temple, arena | ✅ |
+| Riverwatch: stone curtain walls, gatehouses, cobbled streets, detailed timber-framed houses, inn | ✅ |
+| Day/night cycle (servers open at night), invented calendar with holidays, night dangers and rewards | ✅ |
+| Sneaking (C): crouch, reduced detection, Hidden/Detected indicator, double-damage sneak attacks | ✅ |
 | Exploration: discoveries (XP), world map (M), fast travel, day/night cycle | ✅ |
 | Combat: arm-swing attacks, knockback, telegraphed enemy attacks, bosses, weapon infusions | ✅ |
 | XP and levels, three-tree skill system (18 skills, 3 abilities), respec | ✅ |
@@ -71,6 +75,7 @@ Enable Studio Access to API Services**.
 | Attack (hold to repeat) | Left click | R2 | Attack button |
 | Abilities | 1 / 2 / 3 | X / Y / L2 | Ability buttons |
 | Ride / dismount horse | H | L1 | Ride button |
+| Crouch / sneak | C | L3 | Sneak button |
 | Drink best healing potion | Q | D-pad up | Inventory |
 | Talk / read / gather / use station | E | (prompt) | Tap prompt |
 | Pick a dialogue reply | 1-7 or click | | Tap |
@@ -90,6 +95,7 @@ Tracks fall back to each other, so even one "Wilds" track gives you music everyw
 * The world is generated each time a server starts (about 5 seconds), so the edit view is empty and
   everything appears when you press Play.
 * Elections use 10-minute terms in Studio (3 days live) so you can test a full cycle.
+* Every server opens at night (9:30 PM game time); a full day lasts 24 real minutes.
 * For the smoothest cutscenes on a big map, select **Workspace** and turn **StreamingEnabled** off
   (or keep it on for mobile memory; cutscenes request the area they show).
 
@@ -134,8 +140,9 @@ stylua src     # format
 ## Tests
 
 Logic tests run outside Roblox: config cross-references for every system, skill/quest/crafting
-rules, a quest flow simulation, the bounty generator across all levels, and the full terrain
-generator (checks that every town, NPC, zone, landmark and plot sits on dry land). Install the Luau CLI once (`rokit add luau-lang/luau`), then:
+rules, the calendar, a quest flow simulation, the bounty generator across all levels, the full
+terrain generator (checks that every town, NPC, zone, landmark and plot sits on dry land), and a
+complete world build against stand-in Roblox objects (catches runtime errors, reports part counts). Install the Luau CLI once (`rokit add luau-lang/luau`), then:
 
 ```sh
 ./tests/run.sh

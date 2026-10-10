@@ -8,6 +8,7 @@ local State = require(script.Parent.Parent.State)
 local Net = require(script.Parent.Net)
 local Cinematic = require(script.Parent.Cinematic)
 local Creator = require(script.Parent.Parent.Panels.Creator)
+local DayNight = require(script.Parent.DayNight)
 
 local player = Players.LocalPlayer
 
@@ -22,6 +23,8 @@ local function waitForCharacter()
 end
 
 local function run()
+	-- The story opens at night, whatever the server's clock says.
+	DayNight.Override = 22.5
 	waitForCharacter()
 	local data = State.Data
 	if not data.Appearance.Created then
@@ -34,6 +37,7 @@ local function run()
 	local result = Net.Request("FinishIntro")
 	finished = result.ok == true
 	running = false
+	DayNight.Override = nil
 end
 
 function Intro.Start()

@@ -80,6 +80,13 @@ local function render(content)
 	end
 	circle(map, World.Volcano.Position, World.Volcano.BaseRadius * 0.6, Color3.fromRGB(70, 55, 50), 0.2, 2)
 
+	-- The Crown City on its lake
+	local city = World.City
+	circle(map, city.Position, city.LakeRadius, Color3.fromRGB(60, 110, 160), 0.1, 2)
+	circle(map, city.Position, city.IslandRadius, Color3.fromRGB(215, 205, 185), 0.05, 3)
+	circle(map, city.Position, 14, Color3.fromRGB(250, 248, 240), 0, 4)
+	label(map, city.Position, city.Name, Theme.Gold)
+
 	-- Town and farmlands
 	circle(map, World.Town.Position, World.Town.Radius, Color3.fromRGB(190, 170, 120), 0.1, 3)
 	label(map, World.Town.Position, World.Town.Name, Theme.Gold)
@@ -169,6 +176,9 @@ local function render(content)
 		if data.Discoveries["Zone:" .. zoneId] then
 			travelButton(zone.Name, "Zone:" .. zoneId)
 		end
+	end
+	if data.Discoveries["Region:City"] then
+		travelButton(World.City.Name .. " (Crown City)", "Region:City")
 	end
 	if data.Discoveries["Region:Farmlands"] then
 		travelButton(World.Farmlands.Name, "Region:Farmlands")

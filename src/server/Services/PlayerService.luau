@@ -73,7 +73,9 @@ local function applyToCharacter(player)
 	local ratio = humanoid.Health / math.max(humanoid.MaxHealth, 1)
 	humanoid.MaxHealth = stats.MaxHealth
 	humanoid.Health = math.clamp(stats.MaxHealth * ratio, 1, stats.MaxHealth)
-	humanoid.WalkSpeed = Services.PropertyService.MountSpeed(player) or stats.WalkSpeed
+	local crouchSpeed = Services.StealthService.IsCrouching(player)
+		and stats.WalkSpeed * Services.StealthService.SpeedMultiplier
+	humanoid.WalkSpeed = Services.PropertyService.MountSpeed(player) or crouchSpeed or stats.WalkSpeed
 	Services.AppearanceService.Apply(player)
 end
 

@@ -11,6 +11,7 @@ local World = require(Shared.Config.World)
 local Enemies = require(Shared.Config.Enemies)
 local Remotes = require(Shared.Remotes)
 local Util = require(Shared.Util)
+local Clock = require(Shared.Clock)
 local Cinematic = require(script.Parent.Cinematic)
 
 local player = Players.LocalPlayer
@@ -74,6 +75,9 @@ local function bossNearby(position)
 end
 
 local function locationContext(position)
+	if Util.FlatDistance(position, World.City.Position) <= World.City.IslandRadius then
+		return "City"
+	end
 	if Util.FlatDistance(position, World.Town.Position) <= World.Town.Radius then
 		return "Town"
 	end
@@ -102,7 +106,11 @@ local function pickContext()
 	if os.clock() - lastCombat < 8 then
 		return "Combat"
 	end
-	return locationContext(root.Position)
+	local context = locationContext(root.Position)
+	if context == "Wilds" and Clock.IsNight() then
+		return "Night"
+	end
+	return context
 end
 
 local function updateAmbience()

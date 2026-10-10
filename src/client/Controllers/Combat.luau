@@ -203,6 +203,18 @@ function Combat.Start()
 
 	State.Observe(bindAbilities)
 
+	-- Crouch / sneak: slower, much harder for enemies to notice, sneak attacks deal double damage.
+	ContextActionService:BindAction("Crouch", function(_, inputState)
+		if inputState == Enum.UserInputState.Begin and not blocked() then
+			local character = player.Character
+			local crouching = character and character:GetAttribute("Crouching") == true
+			task.spawn(Net.Request, "SetCrouch", not crouching)
+		end
+		return Enum.ContextActionResult.Sink
+	end, true, Enum.KeyCode.C, Enum.KeyCode.ButtonL3)
+	ContextActionService:SetTitle("Crouch", "Sneak")
+	ContextActionService:SetPosition("Crouch", UDim2.new(1, -330, 1, -100))
+
 	-- Ride / dismount your horse.
 	ContextActionService:BindAction("Mount", function(_, inputState)
 		if inputState == Enum.UserInputState.Begin and not blocked() then

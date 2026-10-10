@@ -8,6 +8,7 @@ local Services = {}
 
 local ORDER = {
 	"DataService",
+	"TimeService",
 	"WorldService",
 	"PlayerService",
 	"CharacterService",
@@ -18,6 +19,7 @@ local ORDER = {
 	"BountyService",
 	"EnemyService",
 	"CombatService",
+	"StealthService",
 	"NPCService",
 	"ExplorationService",
 	"CraftingService",

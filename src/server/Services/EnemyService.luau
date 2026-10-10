@@ -11,6 +11,8 @@ local World = require(Shared.Config.World)
 local GameConfig = require(Shared.Config.GameConfig)
 local Remotes = require(Shared.Remotes)
 local Util = require(Shared.Util)
+local Clock = require(Shared.Clock)
+local Calendar = require(Shared.Config.Calendar)
 local ModelBuilder = require(script.Parent.Parent.Lib.ModelBuilder)
 
 local EnemyService = {}
@@ -165,18 +167,31 @@ local function playerRoot(player)
 	return nil
 end
 
+-- Nearest player this enemy can notice. Sneaking players are only noticed much closer.
 local function nearestPlayer(position, range)
-	local best, bestDist = nil, range
+	local best, bestDist = nil, math.huge
 	for _, player in ipairs(Players:GetPlayers()) do
 		local root = playerRoot(player)
 		if root then
 			local d = (root.Position - position).Magnitude
-			if d < bestDist then
+			if d < range * Services.StealthService.DetectionMultiplier(player) and d < bestDist then
 				best, bestDist = player, d
 			end
 		end
 	end
 	return best
+end
+
+-- Clients read this to show the "Detected" eye while sneaking.
+local function setTarget(e, player)
+	if e.Target ~= player then
+		e.Target = player
+		e.Model:SetAttribute("TargetUserId", player and player.UserId or nil)
+	end
+end
+
+local function nightDamage(amount)
+	return Clock.IsNight() and amount * (1 + Calendar.Night.EnemyDamage) or amount
 end
 
 local function reach(e)
@@ -207,7 +222,7 @@ local function basicAttack(e, player)
 		end
 		local targetRoot = playerRoot(player)
 		if targetRoot and (targetRoot.Position - e.Root.Position).Magnitude <= reach(e) + 2.5 then
-			Services.CombatService.DamagePlayer(player, e.Def.Damage, e)
+			Services.CombatService.DamagePlayer(player, nightDamage(e.Def.Damage), e)
 		end
 	end)
 end
@@ -262,14 +277,14 @@ local function specialAttack(e)
 		for _, player in ipairs(Players:GetPlayers()) do
 			local root = playerRoot(player)
 			if root and Util.FlatDistance(root.Position, center) <= special.Radius + 1 then
-				Services.CombatService.DamagePlayer(player, special.Damage, e)
+				Services.CombatService.DamagePlayer(player, nightDamage(special.Damage), e)
 			end
 		end
 	end)
 end
 
 local function resetEnemy(e)
-	e.Target = nil
+	setTarget(e, nil)
 	e.Damagers = {}
 	e.HP = e.MaxHP
 	e.Dot = nil
@@ -293,11 +308,11 @@ local function tickEnemy(e, now)
 			or (root.Position - rootPos).Magnitude > def.AggroRange * 2
 			or Util.FlatDistance(rootPos, e.Home) > leash
 		then
-			e.Target = nil
+			setTarget(e, nil)
 		end
 	end
 	if not e.Target then
-		e.Target = nearestPlayer(rootPos, def.AggroRange)
+		setTarget(e, nearestPlayer(rootPos, def.AggroRange))
 	end
 
 	if e.Target then
@@ -350,14 +365,17 @@ end
 local function rewardPlayers(e)
 	local def = e.Def
 	local veterans = Services.GovernmentService.DecreeActive("VeteransDue") and 0.1 or 0
+	local night = Clock.IsNight() and Calendar.Night.EnemyRewards or 0
+	local holidayXP, holidayGold = Clock.HolidayBonus("XP"), Clock.HolidayBonus("Gold")
 	for player in pairs(e.Damagers) do
 		local root = playerRoot(player)
 		local data = Services.PlayerService.GetData(player)
 		local stats = Services.PlayerService.GetStats(player)
 		local inRange = root and (root.Position - e.Root.Position).Magnitude <= GameConfig.XPShareRadius
 		if player.Parent and data and stats and inRange then
-			local gold = math.floor(math.random(def.Gold[1], def.Gold[2]) * (1 + stats.GoldFind) + 0.5)
-			local xp = math.floor(def.XP * (1 + stats.XPBonus + veterans) + 0.5)
+			local gold =
+				math.floor(math.random(def.Gold[1], def.Gold[2]) * (1 + stats.GoldFind + night + holidayGold) + 0.5)
+			local xp = math.floor(def.XP * (1 + stats.XPBonus + veterans + night + holidayXP) + 0.5)
 			local parts = { "+" .. xp .. " XP", "+" .. gold .. " gold" }
 			data.Stats.Kills += 1
 			Services.PlayerService.AddGold(player, gold)
@@ -418,7 +436,7 @@ function EnemyService.Damage(e, amount, player, crit)
 	e.LastDamaged = os.clock()
 	e.Damagers[player] = (e.Damagers[player] or 0) + amount
 	if not e.Target then
-		e.Target = player
+		setTarget(e, player)
 	end
 	setBar(e)
 	Remotes.Effect:FireClient(

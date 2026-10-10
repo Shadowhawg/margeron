@@ -4,6 +4,16 @@
 -- landmark id or plot id (e.g. "Plot1") to move them.
 --
 -- Coordinates: X = east/west, Z = north(-)/south(+). The map spans -MapHalfSize..MapHalfSize.
+local CITY = Vector3.new(1080, 0, 180)
+-- The city's main gate faces north-west (away from where the river enters the lake).
+local CITY_GATE_ANGLE = math.pi + 0.61
+
+-- City layout is written as if the gate were due west (-X); this rotates it to the real gate.
+local function cityPoint(x, z)
+	local g = CITY_GATE_ANGLE - math.pi
+	return CITY + Vector3.new(x * math.cos(g) - z * math.sin(g), 0, x * math.sin(g) + z * math.cos(g))
+end
+
 return {
 	MapHalfSize = 1800,
 	WaterLevel = 0,
@@ -20,6 +30,20 @@ return {
 		Name = "Riverwatch",
 		Position = Vector3.new(0, 0, 0),
 		Radius = 125,
+	},
+
+	-- The Crown City: a walled capital on an island in a lake, reached by a causeway from the west.
+	City = {
+		Name = "Aurelion",
+		Title = "The Crown City",
+		Position = CITY,
+		Height = 8, -- island plateau height
+		IslandRadius = 215,
+		LakeRadius = 330,
+		WallRadius = 190,
+		GateAngle = CITY_GATE_ANGLE,
+		Approach = cityPoint(-420, 0), -- where the causeway starts on the shore
+		Point = cityPoint, -- helper for placing things in the city
 	},
 
 	-- Safe region with buyable property plots (see Config/Property).
@@ -79,6 +103,45 @@ return {
 			IsObject = true,
 			Greeting = "Notices flap in the wind. Coin for those willing to earn it.",
 		},
+		Chancellor = {
+			Name = "Chancellor Aurelia",
+			Role = "Royal Court of Aurelion",
+			Position = cityPoint(-40, 0),
+			Color = Color3.fromRGB(120, 30, 50),
+			Greeting = "Welcome to Aurelion. Mind the guards, mind your manners, and mind the Tower. It has been watching the east for three hundred years.",
+		},
+		Armorer = {
+			Name = "Master Davor",
+			Role = "Royal Armorer",
+			Position = cityPoint(-148, -32),
+			Color = Color3.fromRGB(90, 90, 100),
+			Shop = "Blacksmith",
+			Greeting = "Crown steel. The finest in Margeron, priced accordingly.",
+		},
+		Archmage = {
+			Name = "Archmage Selene",
+			Role = "Collegium of Stars",
+			Position = cityPoint(0, -128),
+			Color = Color3.fromRGB(70, 60, 140),
+			Shop = "Blacksmith",
+			Greeting = "The stars remember everything, even what you've forgotten. Especially that, in your case.",
+		},
+		Innkeeper = {
+			Name = "Odo",
+			Role = "The Gilded Stag",
+			Position = cityPoint(-128, 46),
+			Color = Color3.fromRGB(150, 100, 60),
+			RestCost = 15,
+			Greeting = "Best beds in the Crown City. Best ale too, if you ask me. Which you should.",
+		},
+		CityBoard = {
+			Name = "Crown Notices",
+			Role = "Contracts & Bounties",
+			Position = cityPoint(-165, 24),
+			IsObject = true,
+			Alias = "Board",
+			Greeting = "Royal seals on half the notices. Crown coin for those who earn it.",
+		},
 		LandSteward = {
 			Name = "Holdsworth",
 			Role = "Land Steward",
@@ -108,6 +171,9 @@ return {
 		{ Station = "AlchemyTable", Position = Vector3.new(-32, 0, -46) },
 		{ Station = "CookingPot", Position = Vector3.new(-14, 0, 34) },
 		{ Station = "Workbench", Position = Vector3.new(34, 0, 38) },
+		{ Station = "Forge", Position = cityPoint(-160, -44) },
+		{ Station = "AlchemyTable", Position = cityPoint(16, -140) },
+		{ Station = "CookingPot", Position = cityPoint(-118, 58) },
 	},
 
 	-- Combat zones. Spawns: { Enemy = Config/Enemies key, Count = how many alive at once }
@@ -261,6 +327,8 @@ return {
 	-- Roads (painted on the terrain; bridges are added where they cross the river).
 	Roads = {
 		{ From = "Town", To = "Farmlands" },
+		{ From = "Town", To = "StonesOfAel" },
+		{ From = "StonesOfAel", To = "CityApproach" },
 		{ From = "Town", To = "WolfWoods" },
 		{ From = "Town", To = "BanditCamp" },
 		{ From = "Town", To = "HollowCrypt" },

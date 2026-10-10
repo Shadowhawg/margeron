@@ -166,14 +166,22 @@ local services = {
 		end,
 	},
 }
+local attributes = {}
+replicatedStorage = {
+	WaitForChild = function(_, child)
+		return setmetatable({ Path = child }, Node)
+	end,
+	GetAttribute = function(_, key)
+		return attributes[key]
+	end,
+	SetAttribute = function(_, key, value)
+		attributes[key] = value
+	end,
+}
 game = {
 	GetService = function(_, name)
 		if name == "ReplicatedStorage" then
-			return {
-				WaitForChild = function(_, child)
-					return setmetatable({ Path = child }, Node)
-				end,
-			}
+			return replicatedStorage
 		end
 		return services[name] or {}
 	end,

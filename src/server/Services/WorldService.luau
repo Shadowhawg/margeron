@@ -11,6 +11,9 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local World = require(Shared.Config.World)
 local TerrainGen = require(script.Parent.Parent.Lib.TerrainGen)
 local Props = require(script.Parent.Parent.Lib.Props)
+local Architecture = require(script.Parent.Parent.Lib.Architecture)
+local CrownCity = require(script.Parent.Parent.Lib.CrownCity)
+local Util = require(Shared.Util)
 
 local WorldService = {}
 
@@ -54,6 +57,10 @@ end
 local function namedPosition(name)
 	if name == "Town" then
 		return World.Town.Position
+	elseif name == "City" then
+		return World.City.Position
+	elseif name == "CityApproach" then
+		return World.City.Approach
 	elseif name == "Farmlands" then
 		return World.Farmlands.Position
 	elseif World.Zones[name] then
@@ -311,80 +318,110 @@ end
 local function buildTown()
 	local town = World.Town
 	local center = town.Position
+	local function groundAt(x, z)
+		return WorldService.Ground(x, z)
+	end
 
-	-- Gaps in the palisade wherever a road leaves town.
+	-- A gate wherever a road leaves town (plus the south gate to the bridge).
 	local gateAngles = {}
+	local function addGate(angle)
+		for _, g in ipairs(gateAngles) do
+			if math.abs((angle - g + math.pi) % (2 * math.pi) - math.pi) < 0.3 then
+				return
+			end
+		end
+		table.insert(gateAngles, angle)
+	end
 	for _, road in ipairs(World.Roads) do
 		local other = road.From == "Town" and road.To or (road.To == "Town" and road.From or nil)
 		local p = other and namedPosition(other)
 		if p then
-			table.insert(gateAngles, math.atan2(p.Z - center.Z, p.X - center.X))
+			addGate(math.atan2(p.Z - center.Z, p.X - center.X))
 		end
 	end
-	table.insert(gateAngles, math.atan2(170 - center.Z, 0 - center.X)) -- south gate to the bridge
+	addGate(math.atan2(170 - center.Z, 0 - center.X))
 	local function nearGate(a, width)
 		for _, g in ipairs(gateAngles) do
-			local d = math.abs((a - g + math.pi) % (2 * math.pi) - math.pi)
-			if d < width then
+			if math.abs((a - g + math.pi) % (2 * math.pi) - math.pi) < width then
 				return true
 			end
 		end
 		return false
 	end
 
+	-- Stone curtain wall with towers, battlements and gatehouses.
 	local wallRadius = town.Radius - 6
-	for i = 0, 89 do
-		local a = i / 90 * math.pi * 2
-		if not nearGate(a, 0.09) then
-			local p = WorldService.Ground(center.X + math.cos(a) * wallRadius, center.Z + math.sin(a) * wallRadius)
-			Props.Part({
-				Name = "Palisade",
-				Size = Vector3.new(2.2, 14, 2.2),
-				CFrame = CFrame.new(p + Vector3.new(0, 6, 0)) * CFrame.Angles(0, -a, 0),
-				Color = rgb(105, 75, 50),
-				Material = Enum.Material.Wood,
-			})
+	Architecture.CurtainWall(center, wallRadius, 14, groundAt, {
+		Gates = gateAngles,
+		Segments = 60,
+		TowerEvery = 6,
+		Thickness = 4,
+		GateWidth = 14,
+		Roof = rgb(95, 45, 40),
+		Banner = rgb(40, 70, 130),
+	})
+
+	-- Streets: a ring road, roads out to every gate, and lamps along them.
+	local ringRadius = 58
+	local ringPoints = 28
+	for i = 0, ringPoints - 1 do
+		local a0 = i / ringPoints * math.pi * 2
+		local a1 = (i + 1) / ringPoints * math.pi * 2
+		Architecture.Street(
+			Vector3.new(math.cos(a0) * ringRadius, 0, math.sin(a0) * ringRadius) + center,
+			Vector3.new(math.cos(a1) * ringRadius, 0, math.sin(a1) * ringRadius) + center,
+			9,
+			groundAt
+		)
+		if i % 4 == 0 then
+			Architecture.Lamp(
+				groundAt(center.X + math.cos(a0) * (ringRadius + 6), center.Z + math.sin(a0) * (ringRadius + 6))
+			)
 		end
 	end
 	for _, g in ipairs(gateAngles) do
-		for side = -1, 1, 2 do
-			local a = g + side * 0.11
-			local p = WorldService.Ground(center.X + math.cos(a) * wallRadius, center.Z + math.sin(a) * wallRadius)
-			Props.Part({
-				Name = "GateTower",
-				Size = Vector3.new(5, 20, 5),
-				Position = p + Vector3.new(0, 9, 0),
-				Color = rgb(95, 70, 48),
-				Material = Enum.Material.WoodPlanks,
-			})
-			Props.Torch(p + Vector3.new(0, 18, 0))
+		local dir = Vector3.new(math.cos(g), 0, math.sin(g))
+		Architecture.Street(center + dir * 16, center + dir * (wallRadius + 4), 10, groundAt)
+		for _, r in ipairs({ 30, 80, 104 }) do
+			local side = Vector3.new(-dir.Z, 0, dir.X) * 7
+			Architecture.Lamp(groundAt(center.X + dir.X * r + side.X, center.Z + dir.Z * r + side.Z))
 		end
 	end
 
-	-- Spots houses must keep clear of: NPCs, stations, the inn and market stalls.
+	-- Spots houses must keep clear of: NPCs, stations, the inn, the hall and market stalls.
 	local reserved = { Vector3.new(-52, 0, 48), Vector3.new(49, 0, 48), Vector3.new(58, 0, 48), Vector3.new(67, 0, 48) }
 	for _, npc in pairs(World.NPCs) do
-		table.insert(reserved, npc.Position)
+		if Util.FlatDistance(npc.Position, center) < town.Radius then
+			table.insert(reserved, npc.Position)
+		end
 	end
 	for _, st in ipairs(World.Stations) do
 		table.insert(reserved, st.Position)
 	end
 
-	-- Houses in a ring, leaving room for gates and the town hall.
+	-- Two rings of timber-framed houses facing the streets.
 	local hallPos = Vector3.new(-66, 0, -66)
 	local hallAngle = math.atan2(hallPos.Z, hallPos.X)
-	local wallColors = { rgb(160, 130, 95), rgb(140, 115, 85), rgb(175, 150, 115), rgb(150, 135, 110) }
-	-- Two rings of houses; each new house also reserves its own spot.
-	for ring, ringInfo in ipairs({ { Radius = 74, Count = 16 }, { Radius = 101, Count = 22 } }) do
+	local walls = { rgb(232, 220, 195), rgb(220, 200, 165), rgb(236, 228, 210), rgb(210, 190, 160), rgb(225, 205, 185) }
+	local roofs = { rgb(110, 55, 45), rgb(85, 70, 65), rgb(120, 75, 50), rgb(70, 75, 85) }
+	local shutters = { rgb(60, 90, 70), rgb(120, 40, 40), rgb(50, 70, 110), rgb(110, 85, 50) }
+	for ring, ringInfo in ipairs({ { Radius = 80, Count = 18, Stories = 2 }, { Radius = 101, Count = 24, Stories = 2 } }) do
 		for i = 0, ringInfo.Count - 1 do
-			local a = i / ringInfo.Count * math.pi * 2 + 0.2 * ring
+			local a = i / ringInfo.Count * math.pi * 2 + 0.13 * ring
 			local nearHall = math.abs((a - hallAngle + math.pi) % (2 * math.pi) - math.pi) < 0.45
 			local spot =
 				Vector3.new(center.X + math.cos(a) * ringInfo.Radius, 0, center.Z + math.sin(a) * ringInfo.Radius)
-			if not nearGate(a, 0.22) and not nearHall and not nearAny(spot.X, spot.Z, reserved, 24) then
+			if not nearGate(a, 0.2) and not nearHall and not nearAny(spot.X, spot.Z, reserved, 22) then
 				local ground = WorldService.Ground(spot.X, spot.Z)
-				local facing = (center - ground) * Vector3.new(1, 0, 1)
-				Props.House(ground, facing.Unit, wallColors[i % #wallColors + 1], 1 + (i % 3) * 0.1)
+				local facing = ((center - ground) * Vector3.new(1, 0, 1)).Unit
+				Architecture.House(ground, facing, {
+					Width = 14 + (i % 3) * 2,
+					Depth = 12 + (i % 2) * 2,
+					Stories = (i % 4 == 0) and 1 or ringInfo.Stories + ((ring == 2 and i % 5 == 0) and 1 or 0),
+					Wall = walls[i % #walls + 1],
+					Roof = roofs[(i + ring) % #roofs + 1],
+					Shutters = shutters[i % #shutters + 1],
+				})
 				table.insert(reserved, spot)
 			end
 		end
@@ -489,34 +526,29 @@ local function buildTown()
 	end
 	local stallColors = { rgb(170, 50, 50), rgb(60, 110, 170), rgb(200, 160, 60) }
 	for i = 1, 3 do
-		local ground = WorldService.Ground(40 + i * 9, 48)
-		Props.Part({
-			Name = "StallCounter",
-			Size = Vector3.new(7, 3, 3),
-			Position = ground + Vector3.new(0, 1.5, 0),
-			Color = rgb(110, 80, 55),
-			Material = Enum.Material.WoodPlanks,
-		})
-		Props.Part({
-			Name = "StallAwning",
-			Size = Vector3.new(8, 0.3, 5),
-			CFrame = CFrame.new(ground + Vector3.new(0, 7, 0.5)) * CFrame.Angles(math.rad(-12), 0, 0),
-			Color = stallColors[i],
-			Material = Enum.Material.Fabric,
-		})
-		for _, x in ipairs({ -3.5, 3.5 }) do
-			Props.Part({
-				Name = "StallPost",
-				Size = Vector3.new(0.4, 6, 0.4),
-				Position = ground + Vector3.new(x, 3, -1.5),
-				Color = rgb(95, 68, 45),
-				Material = Enum.Material.Wood,
-			})
-		end
+		Architecture.MarketStall(WorldService.Ground(40 + i * 9, 48), Vector3.new(0, 0, -1), stallColors[i])
 	end
 	local innGround = WorldService.Ground(-52, 48)
-	local innCf = Props.House(innGround, (Vector3.new(0, 0, 0) - Vector3.new(-52, 0, 48)).Unit, rgb(150, 110, 75), 1.5)
-	Props.Sign(innCf.Position + innCf.LookVector * 12 + Vector3.new(6, 0, 0), "The Drowned Rat Inn", innCf.LookVector)
+	local innFacing = ((Vector3.new(0, 0, 0) - Vector3.new(-52, 0, 48)) * Vector3.new(1, 0, 1)).Unit
+	local innCf = Architecture.House(innGround, innFacing, {
+		Width = 22,
+		Depth = 18,
+		Stories = 3,
+		Wall = rgb(225, 205, 170),
+		Roof = rgb(100, 50, 40),
+		Shutters = rgb(120, 40, 40),
+		Sign = "The Drowned Rat",
+	})
+	-- The innkeeper's counter: rent a bed for the Well Rested bonus.
+	local bed = Props.Part({
+		Name = "InnBed",
+		Size = Vector3.new(4, 3, 2),
+		CFrame = innCf * CFrame.new(-7, 1.5, -11.5),
+		Color = rgb(110, 80, 55),
+		Material = Enum.Material.WoodPlanks,
+	})
+	bed:SetAttribute("Cost", 10)
+	CollectionService:AddTag(bed, "RestSpot")
 
 	for i = 0, 9 do
 		local a = i / 10 * math.pi * 2
@@ -929,6 +961,7 @@ local function buildScenery()
 		local clear = h > 1.5
 			and flatDist(Vector3.new(x, 0, z), World.Town.Position) > World.Town.Radius + 10
 			and flatDist(Vector3.new(x, 0, z), World.Farmlands.Position) > World.Farmlands.Radius * 0.8
+			and flatDist(Vector3.new(x, 0, z), World.City.Position) > World.City.LakeRadius + 20
 			and not nearAny(x, z, landmarkPositions, 34)
 			and roadDistance(x, z) > 9
 		if clear then
@@ -1001,6 +1034,7 @@ local function buildGatherNodes()
 			h > 0.5
 			and flatDist(p, World.Town.Position) > World.Town.Radius
 			and flatDist(p, World.Farmlands.Position) > World.Farmlands.Radius * 0.7
+			and flatDist(p, World.City.Position) > World.City.IslandRadius
 			and roadDistance(x, z) > 6
 		then
 			local biome = biomeAt(x, z, h)
@@ -1064,7 +1098,6 @@ local function buildBridges()
 end
 
 local function setupLighting()
-	Lighting.ClockTime = 9
 	Lighting.Brightness = 2.4
 	Lighting.OutdoorAmbient = rgb(120, 115, 130)
 	Lighting.EnvironmentDiffuseScale = 0.7
@@ -1095,15 +1128,6 @@ local function setupLighting()
 	terrain.WaterReflectance = 0.6
 end
 
--- Day lasts DAY_SECONDS of real time.
-local DAY_SECONDS = 24 * 60
-local function runDayNight()
-	while true do
-		local dt = task.wait(1)
-		Lighting.ClockTime = (Lighting.ClockTime + dt * 24 / DAY_SECONDS) % 24
-	end
-end
-
 function WorldService.Init()
 	if workspace:FindFirstChild("Map") then
 		print("[WorldService] Custom Map found, skipping world generation")
@@ -1112,12 +1136,18 @@ function WorldService.Init()
 		Props.Folder = Instance.new("Folder")
 		Props.Folder.Name = "GeneratedWorld"
 		Props.Folder.Parent = workspace
+		Architecture.Folder = Props.Folder
 		local baseplate = workspace:FindFirstChild("Baseplate")
 		if baseplate then
 			baseplate:Destroy()
 		end
 
-		local positions = { Town = World.Town.Position, Farmlands = World.Farmlands.Position }
+		local positions = {
+			Town = World.Town.Position,
+			Farmlands = World.Farmlands.Position,
+			City = World.City.Position,
+			CityApproach = World.City.Approach,
+		}
 		for zoneId in pairs(World.Zones) do
 			positions[zoneId] = WorldService.GetZonePosition(zoneId)
 		end
@@ -1128,6 +1158,9 @@ function WorldService.Init()
 		TerrainGen.Generate(positions)
 		generated = true
 		buildTown()
+		CrownCity.Build(function(x, z)
+			return WorldService.Ground(x, z)
+		end)
 		buildFarmlands()
 		buildBridges()
 		buildLandmarks()
@@ -1137,7 +1170,6 @@ function WorldService.Init()
 		buildScenery()
 		buildGatherNodes()
 		setupLighting()
-		task.spawn(runDayNight)
 		print(string.format("[WorldService] World generated in %.1fs", os.clock() - started))
 	end
 

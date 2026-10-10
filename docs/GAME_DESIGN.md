@@ -122,6 +122,47 @@ that reveals another piece:
 The ending of chapter one deliberately points at the player-driven systems: *"Build a home. Earn a
 name. Rule this valley if you want to."* Chapter two (the Mother of Ash) continues from Echo V.
 
+## Time, calendar & night
+* **Clock:** every server opens at **night** (9:30 PM), and a game day lasts 24 real minutes.
+  The HUD shows the time, date and season.
+* **The Margeron Reckoning:** 12 months of 30 days (Frostwane, Thawmoon, Seedrise, Rainhold,
+  Bloomtide, Highsun, Emberfall, Goldreap, Leafturn, Duskmere, Hearthfrost, Longnight), 7 weekdays
+  (Sunsday to Starsday), and the year *913 of the Ember Age*. The date is shared by every server.
+* **Holidays** grant a day-long bonus to everyone:
+  * New Ember (+XP)
+  * Founding Day (+gold)
+  * Blossom Fair (double herbs)
+  * Night of Embers (+XP and gold, honoring the Ashen Guard)
+  * Harvest Moon (+yields)
+  * Veil Night (+XP)
+  * Longnight Vigil (double gathering, +gold)
+* **Night:**
+  * Enemies hit 20% harder but give 25% more XP and gold.
+  * Moonpetal yields double.
+  * Sneaking is more effective.
+  * Players carry a lantern, and lamps and windows light the towns.
+* **Rest:** at an inn (for gold) or at home (free) for full health plus *Well Rested* (+10% XP for
+  30 minutes).
+
+## Stealth
+Press **C** to crouch: you move at 55% speed and enemies only notice you within 45% of their
+normal range (30% at night). Hitting an enemy that hasn't noticed you is a **sneak attack** for
+double damage, and it stacks with the Shadow tree. The HUD shows **Hidden** or **Detected**.
+
+## Aurelion, the Crown City
+A walled capital on an island in a lake east of Riverwatch, reached by a long causeway. At its
+heart is the 175-stud **White Tower**, crowned with light and visible across the map, inside a
+walled palace with gardens.
+* **Market plaza:** stalls and a fountain just inside the gate.
+* **Collegium of Stars:** a domed temple-college (Archmage Selene).
+* **Arena:** reserved for future PvP or events.
+* **Memorial gardens:** statues of the seven Ashen Guard.
+* **The Gilded Stag:** an inn where you can rent a bed.
+* **Royal Armory:** Master Davor's shop.
+* **Second Bounty Board**, crown guards, and five districts of stone townhouses.
+* **Quests:** *The Crown City*, *The Chancellor's Writ*, and *Stone Sentinels*, which ties the
+  Sentinels' binding glyphs to the player's past.
+
 ## Character creation
 Six races, each with a passive bonus: Riverfolk (+10% XP), Highlander (-8% damage taken), Sylvan
 (+12% spell power, pointed ears), Ironblood (+10% weapon damage, tusks), Deepkin (+20 HP, +10% gold,
