@@ -1,0 +1,7 @@
+{
+	"languageMode": "strict",
+	"aliases": {
+		"shared": "./src/shared",
+		"testing": "./lune/lib/testing"
+	}
+}

@@ -1,0 +1,9 @@
+[package]
+name = "shadowhawg/tidewater"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+private = true
+
+# Approved packages only (BUILD_SPEC §2.3). React is added in Phase 1 when the HUD needs it.
+[dependencies]
