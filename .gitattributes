@@ -1,0 +1,4 @@
+# Keep LF line endings on every OS; StyLua checks for Unix line endings.
+* text=auto eol=lf
+*.rbxl binary
+*.rbxm binary

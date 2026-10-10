@@ -1,0 +1,11 @@
+# Toolchain for Tidewater, managed by Rokit (https://github.com/rojo-rbx/rokit).
+# Run `rokit install` after cloning. Exact versions are also recorded in docs/PROGRESS.md.
+# Where Rokit can't reach the GitHub API (cloud sessions), use tools/install-toolchain.sh.
+
+[tools]
+rojo = "rojo-rbx/rojo@7.7.1"
+wally = "UpliftGames/wally@0.3.2"
+stylua = "JohnnyMorganz/StyLua@2.6.0"
+selene = "Kampfkarren/selene@0.32.0"
+luau-lsp = "JohnnyMorganz/luau-lsp@1.70.1"
+lune = "lune-org/lune@0.10.5"
