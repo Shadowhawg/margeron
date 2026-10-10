@@ -1,0 +1,8 @@
+[package]
+name = "shadowhawg/go-viral"
+version = "0.1.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+
+[server-dependencies]
+ProfileStore = "lm-loleris/profilestore@1.0.3"

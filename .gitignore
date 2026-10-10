@@ -1,0 +1,9 @@
+# Wally / Rojo outputs
+Packages/
+ServerPackages/
+sourcemap.json
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+__pycache__/
