@@ -6,6 +6,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Products = require(Shared.Config.Products)
+local Stats = require(Shared.Stats)
 
 local ShopService = {}
 local Services
@@ -38,6 +39,23 @@ local function grant(player, item, silent, skipGold)
 	end
 	if g.Cosmetic then
 		Services.InventoryService.GrantCosmetic(player, g.Cosmetic, silent)
+	end
+	local data = Services.PlayerService.GetData(player)
+	if g.Horse then
+		Services.PropertyService.GrantHorse(player, g.Horse)
+	end
+	if g.Pass and data then
+		data.Passes[g.Pass] = true
+		Services.PlayerService.Changed(player)
+	end
+	-- Consumable boosts are skipped on the silent re-check of game passes.
+	if g.CraftBoostSeconds and data and not skipGold then
+		local now = Stats.Now()
+		data.CraftBoostUntil = math.max(data.CraftBoostUntil or 0, now) + g.CraftBoostSeconds
+		Services.PlayerService.Changed(player)
+	end
+	if g.GrowAll and not skipGold then
+		Services.PropertyService.GrowAll(player)
 	end
 	if not silent then
 		Services.PlayerService.Notify(player, "Thank you for supporting Margeron! Received: " .. item.Name, "Success")

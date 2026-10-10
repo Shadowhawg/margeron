@@ -3,6 +3,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Items = require(Shared.Config.Items)
+local Crafting = require(Shared.Config.Crafting)
+local Races = require(Shared.Config.Races)
+local CraftingRules = require(Shared.CraftingRules)
 local Create = require(script.Parent.Parent.UI.Create)
 local Theme = require(script.Parent.Parent.UI.Theme)
 local State = require(script.Parent.Parent.State)
@@ -70,7 +73,7 @@ local function render(content)
 		Size = UDim2.new(0.62, 0, 0, 34),
 		Parent = content,
 	}, { Create.List(6, Enum.FillDirection.Horizontal) })
-	for i, name in ipairs({ "Weapons", "Cosmetics", "Materials" }) do
+	for i, name in ipairs({ "Weapons", "Cosmetics", "Materials", "Potions & Food" }) do
 		Create.Button(name, tab == name and Theme.Border or Theme.PanelLight, function()
 			tab = name
 			Windows.Render()
@@ -133,16 +136,68 @@ local function render(content)
 				Parent = list,
 			})
 		end
-	else
-		for materialId, count in pairs(data.Materials) do
-			local def = Items.Materials[materialId]
-			if def then
-				order += 1
-				InventoryPanel.Row(list, order, def.Name .. "  x" .. count, "Used for quests and bounties")
+	elseif tab == "Materials" then
+		local ids = {}
+		for materialId in pairs(data.Materials) do
+			if Items.Materials[materialId] then
+				table.insert(ids, materialId)
 			end
 		end
+		table.sort(ids, function(a, b)
+			local ca, cb = Items.Materials[a].Category or "", Items.Materials[b].Category or ""
+			if ca == cb then
+				return Items.Materials[a].Name < Items.Materials[b].Name
+			end
+			return ca < cb
+		end)
+		for _, materialId in ipairs(ids) do
+			local def = Items.Materials[materialId]
+			order += 1
+			local detail = (def.Category or "Material") .. " · worth " .. (def.Value or 1) .. "g"
+			if def.Effects then
+				local known = data.Crafting.Known[materialId] or {}
+				local parts = {}
+				for _, effect in ipairs(def.Effects) do
+					table.insert(parts, known[effect] and Crafting.Effects[effect].Name or "???")
+				end
+				detail ..= " · " .. table.concat(parts, ", ")
+			end
+			InventoryPanel.Row(list, order, def.Name .. "  x" .. data.Materials[materialId], detail)
+		end
 		if order == 0 then
-			Create.Label("No materials. Enemies drop them when defeated.", { TextColor3 = Theme.Muted, Parent = list })
+			Create.Label(
+				"No materials. Gather herbs and ore, farm, or take them from defeated enemies.",
+				{ TextColor3 = Theme.Muted, AutomaticSize = Enum.AutomaticSize.Y, Parent = list }
+			)
+		end
+	else
+		local keys = {}
+		for key in pairs(data.Consumables) do
+			if CraftingRules.Describe(key) then
+				table.insert(keys, key)
+			end
+		end
+		table.sort(keys)
+		for _, key in ipairs(keys) do
+			local info = CraftingRules.Describe(key)
+			order += 1
+			InventoryPanel.Row(
+				list,
+				order,
+				info.Name .. "  x" .. data.Consumables[key],
+				CraftingRules.EffectSummary(info),
+				info.Kind == "Food" and "Eat" or "Drink",
+				Theme.Good,
+				function()
+					Net.Request("UseConsumable", key)
+				end
+			)
+		end
+		if order == 0 then
+			Create.Label(
+				"No potions or food. Brew potions at an Alchemy Table and cook at a Cooking Pot. Press Q to drink your best healing potion.",
+				{ TextColor3 = Theme.Muted, AutomaticSize = Enum.AutomaticSize.Y, Parent = list }
+			)
 		end
 	end
 
@@ -161,7 +216,9 @@ local function render(content)
 		Parent = sheet,
 	})
 	local lines = {
+		{ "Race", Races.Races[data.Appearance.Race] and Races.Races[data.Appearance.Race].Name or "?" },
 		{ "Level", data.Level },
+		{ "Crafting Level", data.Crafting.Level },
 		{ "Max Health", stats.MaxHealth },
 		{ "Weapon Damage", percent(stats.PhysicalDamage) },
 		{ "Spell Power", percent(stats.SpellPower) },

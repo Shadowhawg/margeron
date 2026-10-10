@@ -12,15 +12,23 @@ local Panels = script.Panels
 local modules = {
 	require(Controllers.Notifications),
 	require(Controllers.Windows),
+	require(Controllers.Cinematic),
 	require(Controllers.HUD),
 	require(Controllers.Effects),
 	require(Controllers.Dialogue),
 	require(Controllers.Combat),
 	require(Controllers.WorldMarkers),
+	require(Controllers.Music),
+	require(Panels.Creator),
+	require(Controllers.Intro),
 	require(Panels.SkillsPanel),
 	require(Panels.QuestsPanel),
 	require(Panels.InventoryPanel),
 	require(Panels.ShopPanels),
+	require(Panels.CraftingPanel),
+	require(Panels.EstatePanels),
+	require(Panels.GovernmentPanel),
+	require(Panels.MapPanel),
 }
 
 for _, module in ipairs(modules) do

@@ -35,4 +35,11 @@ return {
 	-- Combat
 	XPShareRadius = 150,
 	NPCInteractDistance = 14,
+
+	-- Exploration
+	DiscoveryRadius = 60,
+	GatherRespawnSeconds = 90,
+
+	-- Merchants buy goods at this fraction of an item's Value
+	SellRate = 1,
 }

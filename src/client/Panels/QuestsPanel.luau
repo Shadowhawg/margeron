@@ -5,6 +5,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local World = require(Shared.Config.World)
 local Items = require(Shared.Config.Items)
 local QuestRules = require(Shared.QuestRules)
+local Story = require(Shared.Config.Story)
+local Cinematic = require(script.Parent.Parent.Controllers.Cinematic)
 local Create = require(script.Parent.Parent.UI.Create)
 local Theme = require(script.Parent.Parent.UI.Theme)
 local State = require(script.Parent.Parent.State)
@@ -15,6 +17,7 @@ local New = Create.New
 local QuestsPanel = {}
 
 local selected = nil
+local journalTab = "Quests"
 
 local TYPE_COLORS = {
 	Main = Theme.Gold,
@@ -22,8 +25,73 @@ local TYPE_COLORS = {
 	Bounty = Color3.fromRGB(180, 140, 220),
 }
 
+local function renderMemories(content)
+	local data = State.Data
+	local list = New("ScrollingFrame", {
+		Position = UDim2.fromOffset(0, 40),
+		Size = UDim2.new(1, 0, 1, -40),
+		BackgroundColor3 = Theme.Panel,
+		CanvasSize = UDim2.new(),
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		ScrollBarThickness = 6,
+		Parent = content,
+	}, { Create.Corner(8), Create.Padding(10), Create.List(8) })
+	local order = 0
+	for _, echoId in ipairs(Story.EchoOrder) do
+		local cutscene = Story.Cutscenes[echoId]
+		order += 1
+		local unlocked = data.Story.Echoes[echoId]
+		local row = New(
+			"Frame",
+			{ LayoutOrder = order, Size = UDim2.new(1, 0, 0, 50), BackgroundColor3 = Theme.Background, Parent = list },
+			{
+				Create.Corner(6),
+				Create.Padding(8),
+			}
+		)
+		Create.Label(unlocked and (cutscene.Title .. ": " .. cutscene.Subtitle) or (cutscene.Title .. ": ???"), {
+			Font = Theme.TitleFont,
+			TextSize = 22,
+			TextColor3 = unlocked and Theme.Accent or Theme.Muted,
+			Size = UDim2.new(1, -130, 1, 0),
+			Parent = row,
+		})
+		if unlocked then
+			Create.Button("Relive", Theme.PanelLight, function()
+				Windows.Close()
+				task.spawn(Cinematic.Play, echoId)
+			end, { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.fromScale(1, 0.5), Parent = row })
+		end
+	end
+	order += 1
+	Create.Label(
+		"Memories return as you follow the main story.",
+		{ LayoutOrder = order, TextColor3 = Theme.Muted, TextSize = 13, Parent = list }
+	)
+end
+
 local function render(content)
 	local data = State.Data
+	local tabs = New("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 32), Parent = content }, {
+		Create.List(6, Enum.FillDirection.Horizontal),
+	})
+	for i, name in ipairs({ "Quests", "Memories" }) do
+		Create.Button(name, journalTab == name and Theme.Border or Theme.PanelLight, function()
+			journalTab = name
+			Windows.Render()
+		end, { LayoutOrder = i, Parent = tabs })
+	end
+	if journalTab == "Memories" then
+		renderMemories(content)
+		return
+	end
+	local inner = New("Frame", {
+		BackgroundTransparency = 1,
+		Position = UDim2.fromOffset(0, 40),
+		Size = UDim2.new(1, 0, 1, -40),
+		Parent = content,
+	})
+	content = inner
 	local keys = QuestRules.ActiveKeys(data)
 	if not selected or not data.Quests.Active[selected] then
 		selected = data.TrackedQuest ~= "" and data.Quests.Active[data.TrackedQuest] and data.TrackedQuest or keys[1]

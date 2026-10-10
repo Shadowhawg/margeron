@@ -7,26 +7,46 @@
 --   TurnIn      NPC id you return to
 --   LevelReq    minimum level to accept
 --   Requires    quest ids that must be completed first
---   Objectives  list of { Kind = "Kill"|"Collect"|"Talk", Target = enemy/material/NPC id, Count = n, Text = "..." }
---               Collect objectives consume the materials on turn-in.
---   Rewards     { XP, Gold, Weapon, Cosmetic }
+--   Objectives  list of { Kind, Target, Count, Text }
+--                 Kind = "Kill"    Target = enemy id
+--                        "Collect" Target = material id (consumed on turn-in)
+--                        "Talk"    Target = NPC id
+--                        "Event"   Target = Gather | Brew | Cook | Craft | Smelt | Temper | Infuse |
+--                                           Harvest | Discover | BuyHome | BuyAnimal | BuyHorse | Vote
+--   Rewards     { XP, Gold, Weapon, Cosmetic, Materials = { [id] = count } }
 --   Dialogue    { Offer, Progress, Complete }
 --
+-- Finishing a main quest can also play a memory cutscene (see Config/Story.QuestEchoes).
 -- To extend the story, add a quest here with Requires = { "<last quest id>" }. Nothing else to wire up.
 return {
-	Order = { "MQ1", "MQ2", "MQ3", "MQ4", "MQ5", "MQ6", "SQ_Pelts", "SQ_Trolls" },
+	Order = {
+		"MQ1",
+		"MQ2",
+		"MQ3",
+		"MQ4",
+		"MQ5",
+		"MQ6",
+		"SQ_Herbs",
+		"SQ_Explore",
+		"SQ_Pelts",
+		"SQ_Home",
+		"SQ_Harvest",
+		"SQ_Civic",
+		"SQ_Forge",
+		"SQ_Trolls",
+	},
 
 	MQ1 = {
-		Name = "A Stranger in Riverwatch",
+		Name = "The Unremembered",
 		Type = "Main",
 		Giver = nil,
 		TurnIn = "Elder",
 		LevelReq = 1,
-		Description = "You woke on the riverbank with no memory and a sword. Find the village elder.",
-		Objectives = { { Kind = "Talk", Target = "Elder", Count = 1, Text = "Speak with Elder Maren" } },
-		Rewards = { XP = 50, Gold = 10 },
+		Description = "You woke on the riverbank with no memory, a sword, and a voice that isn't yours. Find the elder of Riverwatch.",
+		Objectives = { { Kind = "Talk", Target = "Elder", Count = 1, Text = "Find Elder Maren in Riverwatch" } },
+		Rewards = { XP = 50, Gold = 25 },
 		Dialogue = {
-			Complete = "Pulled from the river, and still breathing. The ash in the sky says you aren't the only strange thing to arrive this season. Rest, then help us.",
+			Complete = "Pulled from the river, and still breathing. Ash in your hair, too. That's the third omen this week, and you're the only one with a sword. Rest, stranger. Then help us.",
 		},
 	},
 	MQ2 = {
@@ -36,13 +56,13 @@ return {
 		TurnIn = "Elder",
 		LevelReq = 1,
 		Requires = { "MQ1" },
-		Description = "Wolves from Whisperwood have grown bold. Thin the pack.",
+		Description = "Wolves from Whisperwood have grown bold. Thin the pack and find out what's driving them.",
 		Objectives = { { Kind = "Kill", Target = "Wolf", Count = 5, Text = "Slay wolves in Whisperwood" } },
-		Rewards = { XP = 140, Gold = 30 },
+		Rewards = { XP = 140, Gold = 40 },
 		Dialogue = {
-			Offer = "The wolves of Whisperwood came into the village last night. They've never done that. Something is driving them out. Thin their numbers.",
-			Progress = "Whisperwood lies east, past the river.",
-			Complete = "Five wolves? Good. But they were running FROM something. The hunters say the eastern sky glows at night.",
+			Offer = "The wolves of Whisperwood came into the village last night. They've never done that. Something is driving them out of the forest. Thin their numbers, and look for whatever's scaring them.",
+			Progress = "Whisperwood lies east. Follow the road past the old oak.",
+			Complete = "Five wolves? Good. But they were running FROM something. The hunters say the eastern sky glows at night now.",
 		},
 	},
 	MQ3 = {
@@ -54,10 +74,10 @@ return {
 		Requires = { "MQ2" },
 		Description = "Brann the blacksmith has a blade for Riverwatch's newest defender.",
 		Objectives = { { Kind = "Talk", Target = "Blacksmith", Count = 1, Text = "Visit Brann at the forge" } },
-		Rewards = { XP = 80, Weapon = "SteelSword" },
+		Rewards = { XP = 100, Weapon = "SteelSword" },
 		Dialogue = {
-			Offer = "That iron sword won't last. Go see Brann. Tell him I sent you.",
-			Complete = "Maren sent you? Then take this. Steel, folded twice. Don't make me regret it.",
+			Offer = "That iron sword won't last. Go see Brann. Tell him I sent you, and tell him not to argue.",
+			Complete = "Maren sent you? Then take this. Steel, folded twice. ...Hm. You hold it like you've done this a long time. Funny, for someone who can't remember breakfast.",
 		},
 	},
 	MQ4 = {
@@ -72,11 +92,11 @@ return {
 			{ Kind = "Kill", Target = "Bandit", Count = 6, Text = "Defeat Redfang bandits" },
 			{ Kind = "Kill", Target = "BanditChief", Count = 1, Text = "Defeat Grisk the Redfang" },
 		},
-		Rewards = { XP = 350, Gold = 120 },
+		Rewards = { XP = 350, Gold = 150 },
 		Dialogue = {
-			Offer = "The Redfangs have stopped every caravan this month. Their camp is southwest. Cut off the head, and the body will scatter.",
+			Offer = "The Redfangs have stopped every caravan this month. Their camp is southwest, past the river. Cut off the head, and the body will scatter.",
 			Progress = "Grisk still breathes. Riverwatch still starves.",
-			Complete = "Grisk carried a map, marked with the old crypt to the south. Why would bandits care about a tomb?",
+			Complete = "Grisk carried a map, marked with the old crypt to the north. And a purse of coin no bandit earns honestly. Someone paid them to dig.",
 		},
 	},
 	MQ5 = {
@@ -88,11 +108,11 @@ return {
 		Requires = { "MQ4" },
 		Description = "The Hollow Crypt's dead are walking. Gather their bone dust for Seer Ilsa.",
 		Objectives = { { Kind = "Collect", Target = "BoneDust", Count = 5, Text = "Collect Bone Dust" } },
-		Rewards = { XP = 500, Gold = 150 },
+		Rewards = { XP = 550, Gold = 180 },
 		Dialogue = {
 			Offer = "The dead in the Hollow Crypt have risen. Bring their dust to Seer Ilsa. She'll know what woke them.",
-			Progress = "Bring me the dust. The bones remember what woke them.",
-			Complete = "Ash. There is ash in the bone. A wyrm has nested on Cinder Peak, and its breath wakes the dead. It must die.",
+			Progress = "Bring me the dust. The bones remember what woke them. So, I think, do you.",
+			Complete = "Ash. There's ash in the bone. These were soldiers once. They wore your colors. ...Don't look at me like that. You already knew.",
 		},
 	},
 	MQ6 = {
@@ -102,16 +122,53 @@ return {
 		TurnIn = "Elder",
 		LevelReq = 8,
 		Requires = { "MQ5" },
-		Description = "Slay the Ashen Wyrmling atop Cinder Peak.",
+		Description = "Climb Cinder Peak and slay the Ashen Wyrmling before it wakes its mother.",
 		Objectives = { { Kind = "Kill", Target = "AshenWyrmling", Count = 1, Text = "Slay the Ashen Wyrmling" } },
-		Rewards = { XP = 1200, Gold = 400, Cosmetic = "TitleWyrmslayer" },
+		Rewards = { XP = 1400, Gold = 500, Cosmetic = "TitleWyrmslayer" },
 		Dialogue = {
-			Offer = "Cinder Peak, northeast. Bring friends if you have them. Bring courage if you don't.",
+			Offer = "A wyrmling has nested on Cinder Peak, far to the northeast. Its breath is what wakes the dead. Bring friends if you have them. Bring courage if you don't.",
 			Progress = "The ash still falls. The wyrm still lives.",
-			Complete = "Wyrmslayer! Riverwatch owes you everything. But that was a hatchling. Somewhere, its mother is waiting. Until then, the Bounty Board needs you.",
+			Complete = "Wyrmslayer! Riverwatch owes you everything. Take land, build a home. Stand for the Hall, even. This valley could use someone who doesn't run.",
 		},
 	},
 
+	SQ_Herbs = {
+		Name = "The Seer's Errand",
+		Type = "Side",
+		Giver = "Mystic",
+		TurnIn = "Mystic",
+		LevelReq = 1,
+		Requires = { "MQ1" },
+		Description = "Seer Ilsa wants to see if you have a knack for alchemy.",
+		Objectives = {
+			{ Kind = "Event", Target = "Gather", Count = 3, Text = "Gather herbs in the wild" },
+			{ Kind = "Event", Target = "Brew", Count = 1, Text = "Brew a potion at an Alchemy Table" },
+		},
+		Rewards = { XP = 150, Gold = 40, Materials = { Moonpetal = 2, Bloodthistle = 2 } },
+		Dialogue = {
+			Offer = "Herbs grow everywhere if you know how to look. Gather a few, then mix any two at my table. Ingredients that share a property make a potion. The rest you'll learn by trying.",
+			Progress = "Two ingredients, one shared property. Taste them if you must. Most won't kill you.",
+			Complete = "A potion! Crude, but it works. Keep experimenting. Every ingredient has three secrets.",
+		},
+	},
+	SQ_Explore = {
+		Name = "Lay of the Land",
+		Type = "Side",
+		Giver = "Hunter",
+		TurnIn = "Hunter",
+		LevelReq = 2,
+		Requires = { "MQ1" },
+		Description = "Ysolde says you can't protect a valley you don't know.",
+		Objectives = {
+			{ Kind = "Event", Target = "Discover", Count = 3, Text = "Discover landmarks (open your map with M)" },
+		},
+		Rewards = { XP = 300, Gold = 60, Cosmetic = "TitleExplorer" },
+		Dialogue = {
+			Offer = "Margeron is bigger than you think. Towers, shrines, ruins older than the kingdom. Find three. Climb something tall. Look around.",
+			Progress = "Three landmarks. Use your eyes. And your map.",
+			Complete = "Good. Now you know where you are. That's more than most people can say.",
+		},
+	},
 	SQ_Pelts = {
 		Name = "Pelts for Winter",
 		Type = "Side",
@@ -128,6 +185,73 @@ return {
 			Complete = "Good, clean pelts. Here, a Riverwatch cape. Wear it with pride, or at least warmth.",
 		},
 	},
+	SQ_Home = {
+		Name = "A Place of Your Own",
+		Type = "Side",
+		Giver = "LandSteward",
+		TurnIn = "LandSteward",
+		LevelReq = 3,
+		Requires = { "MQ2" },
+		Description = "Holdsworth has land for sale in Greenmeadow, south of the river.",
+		Objectives = { { Kind = "Event", Target = "BuyHome", Count = 1, Text = "Buy a home in Greenmeadow" } },
+		Rewards = { XP = 400, Materials = { WheatSeeds = 6, CarrotSeeds = 4 } },
+		Dialogue = {
+			Offer = "Every hero needs somewhere to hang their sword. A cottage, a farm, a manor if you're flush. Buy a deed and the land's yours. Fields, pens, the lot.",
+			Progress = "Deeds are on my desk whenever you have the coin.",
+			Complete = "Congratulations, landowner! Here, some seed to get you started. Old Tomas can tell you what to do with it.",
+		},
+	},
+	SQ_Harvest = {
+		Name = "First Harvest",
+		Type = "Side",
+		Giver = "Farmer",
+		TurnIn = "Farmer",
+		LevelReq = 3,
+		Requires = { "SQ_Home" },
+		Description = "Old Tomas will teach you to farm.",
+		Objectives = { { Kind = "Event", Target = "Harvest", Count = 3, Text = "Harvest crops from your fields" } },
+		Rewards = { XP = 300, Gold = 50, Materials = { Fertilizer = 4 } },
+		Dialogue = {
+			Offer = "Plant your seeds, come back when they're ripe, harvest. Fertilizer makes it faster. Three harvests and I'll call you a farmer.",
+			Progress = "Crops don't grow faster if you stare at them. I've checked.",
+			Complete = "Three harvests! You're a farmer now. Sorry about that. Have some fertilizer.",
+		},
+	},
+	SQ_Civic = {
+		Name = "A Voice in the Hall",
+		Type = "Side",
+		Giver = "Herald",
+		TurnIn = "Herald",
+		LevelReq = 3,
+		Requires = { "MQ2" },
+		Description = "Riverwatch chooses its own Lord. Cast your vote.",
+		Objectives = { { Kind = "Event", Target = "Vote", Count = 1, Text = "Vote in the Riverwatch election" } },
+		Rewards = { XP = 200, Gold = 120 },
+		Dialogue = {
+			Offer = "Riverwatch is governed by those it chooses. Every term, candidates pledge a decree and the people vote. Cast your vote. Or stand yourself, if you've the renown.",
+			Progress = "The ballot is open. Speak to me to vote.",
+			Complete = "Your voice is counted. That's more power than most folk realize.",
+		},
+	},
+	SQ_Forge = {
+		Name = "Tempered",
+		Type = "Side",
+		Giver = "Blacksmith",
+		TurnIn = "Blacksmith",
+		LevelReq = 4,
+		Requires = { "MQ3" },
+		Description = "Brann will show you how to smelt ore and temper a blade.",
+		Objectives = {
+			{ Kind = "Event", Target = "Smelt", Count = 2, Text = "Smelt ingots at a forge" },
+			{ Kind = "Event", Target = "Temper", Count = 1, Text = "Temper a weapon" },
+		},
+		Rewards = { XP = 300, Gold = 80, Materials = { IronOre = 6 } },
+		Dialogue = {
+			Offer = "Iron ore's in the hills, in the grey rocks. Two ore make an ingot. Ingots make a blade stronger. Smelt two, temper anything, and show me.",
+			Progress = "Ore. Fire. Patience. In that order.",
+			Complete = "Not bad. Not bad at all. You'll put me out of business.",
+		},
+	},
 	SQ_Trolls = {
 		Name = "Cold Comfort",
 		Type = "Side",
@@ -135,13 +259,13 @@ return {
 		TurnIn = "Mystic",
 		LevelReq = 10,
 		Requires = { "MQ5" },
-		Description = "Seer Ilsa needs troll fat from Frosthollow for her rituals.",
+		Description = "Seer Ilsa needs troll fat from Frosthollow for her visions.",
 		Objectives = { { Kind = "Collect", Target = "TrollFat", Count = 3, Text = "Collect Troll Fat" } },
 		Rewards = { XP = 900, Gold = 250 },
 		Dialogue = {
-			Offer = "My visions need fuel, and nothing burns like troll fat. Frosthollow, to the northwest. Mind the claws.",
+			Offer = "My visions need fuel, and nothing burns like troll fat. Frosthollow, far to the northwest. Mind the claws.",
 			Progress = "The visions grow dim without fuel.",
-			Complete = "Pungent. Perfect. I see much further now. Return when you're ready to hear what I've seen.",
+			Complete = "Pungent. Perfect. I see the mountain now. The Mother turns in her sleep, and she says your old name. Return when you're ready to hear it.",
 		},
 	},
 }

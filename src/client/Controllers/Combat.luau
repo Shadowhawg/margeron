@@ -11,6 +11,9 @@ local State = require(script.Parent.Parent.State)
 local Net = require(script.Parent.Net)
 local HUD = require(script.Parent.HUD)
 local Windows = require(script.Parent.Windows)
+local Cinematic = require(script.Parent.Cinematic)
+local Creator = require(script.Parent.Parent.Panels.Creator)
+local CraftingRules = require(Shared.CraftingRules)
 
 local player = Players.LocalPlayer
 
@@ -55,11 +58,29 @@ local function aimDirection(root)
 	return Vector3.new(look.X, math.clamp(look.Y, -0.3, 0.3), look.Z).Unit
 end
 
+-- Turn toward the aim without fighting the default auto-rotation (which caused the jitter).
+local autoRotateToken = 0
 local function faceDirection(root, dir)
 	local flat = Vector3.new(dir.X, 0, dir.Z)
-	if flat.Magnitude > 0.01 then
-		root.CFrame = CFrame.lookAt(root.Position, root.Position + flat)
+	local humanoid = root.Parent and root.Parent:FindFirstChildOfClass("Humanoid")
+	if flat.Magnitude < 0.01 or not humanoid then
+		return
 	end
+	autoRotateToken += 1
+	local token = autoRotateToken
+	humanoid.AutoRotate = false
+	root.CFrame = CFrame.lookAt(root.Position, root.Position + flat)
+	task.delay(0.45, function()
+		if token == autoRotateToken and humanoid.Parent then
+			humanoid.AutoRotate = true
+		end
+	end)
+end
+
+-- No fighting during cutscenes, conversations, menus or the character creator.
+local function blocked()
+	local creator = Creator.Open_
+	return Windows.IsOpen() or Cinematic.Active or creator
 end
 
 local function tryAttack()
@@ -131,7 +152,7 @@ local function bindAbilities()
 			boundAbilities[abilityId] = true
 			local actionName = "Ability_" .. abilityId
 			ContextActionService:BindAction(actionName, function(_, inputState)
-				if inputState == Enum.UserInputState.Begin and not Windows.IsOpen() then
+				if inputState == Enum.UserInputState.Begin and not blocked() then
 					task.spawn(useAbility, abilityId)
 				end
 				return Enum.ContextActionResult.Sink
@@ -147,7 +168,7 @@ end
 function Combat.Start()
 	-- Mouse: hold to keep attacking. Clicks on UI are ignored (processed == true).
 	UserInputService.InputBegan:Connect(function(input, processed)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 and not processed and not Windows.IsOpen() then
+		if input.UserInputType == Enum.UserInputType.MouseButton1 and not processed and not blocked() then
 			attackHeld = true
 			tryAttack()
 		end
@@ -174,13 +195,43 @@ function Combat.Start()
 	task.spawn(function()
 		while true do
 			task.wait(0.05)
-			if attackHeld and not Windows.IsOpen() then
+			if attackHeld and not blocked() then
 				tryAttack()
 			end
 		end
 	end)
 
 	State.Observe(bindAbilities)
+
+	-- Ride / dismount your horse.
+	ContextActionService:BindAction("Mount", function(_, inputState)
+		if inputState == Enum.UserInputState.Begin and not blocked() then
+			task.spawn(Net.Request, "ToggleMount")
+		end
+		return Enum.ContextActionResult.Sink
+	end, true, Enum.KeyCode.H, Enum.KeyCode.ButtonL1)
+	ContextActionService:SetTitle("Mount", "Ride")
+	ContextActionService:SetPosition("Mount", UDim2.new(1, -250, 1, -100))
+
+	-- Quick heal: drink the strongest healing potion you carry.
+	ContextActionService:BindAction("QuickHeal", function(_, inputState)
+		if inputState ~= Enum.UserInputState.Begin or blocked() or not State.Data then
+			return Enum.ContextActionResult.Sink
+		end
+		local bestKey, bestHeal = nil, 0
+		for key in pairs(State.Data.Consumables) do
+			local info = CraftingRules.Describe(key)
+			for _, e in ipairs(info and info.Effects or {}) do
+				if e.Id == "RestoreHealth" and e.Magnitude > bestHeal then
+					bestKey, bestHeal = key, e.Magnitude
+				end
+			end
+		end
+		if bestKey then
+			task.spawn(Net.Request, "UseConsumable", bestKey)
+		end
+		return Enum.ContextActionResult.Sink
+	end, false, Enum.KeyCode.Q, Enum.KeyCode.DPadUp)
 
 	Remotes.Effect.OnClientEvent:Connect(function(kind, abilityId)
 		if kind == "CooldownReset" then

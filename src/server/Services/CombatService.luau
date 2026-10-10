@@ -14,6 +14,7 @@ local MAX_MELEE_TARGETS = { Sword = 3, Axe = 4, Dagger = 1 }
 local LATENCY_TOLERANCE = 0.12
 
 local lastUsed = {} -- [Player] = { [actionName] = os.clock() }
+local lastCombat = {} -- [Player] = os.clock() of the last hit dealt or taken
 local empoweredUntil = {} -- [Player] = os.clock() (Shadowstep guaranteed crit)
 local wardReadyAt = {} -- [Player] = os.clock()
 
@@ -73,11 +74,26 @@ local function hit(player, e, baseDamage, kind)
 	end
 	damage *= 0.9 + math.random() * 0.2
 
-	local dealt = Services.EnemyService.Damage(e, damage, player, crit)
+	local dealt, killed = Services.EnemyService.Damage(e, damage, player, crit)
+	lastCombat[player] = os.clock()
 	if stats.Lifesteal > 0 and dealt > 0 then
 		humanoid.Health = math.min(humanoid.MaxHealth, humanoid.Health + dealt * stats.Lifesteal)
 	end
+	-- Weapon infusions
+	if dealt > 0 and not killed then
+		if stats.Infusion == "Ember" then
+			Services.EnemyService.ApplyDot(e, dealt * 0.25, 3, player, "Fire")
+		elseif stats.Infusion == "Venom" then
+			Services.EnemyService.ApplyDot(e, dealt * 0.3, 4, player, "Poison")
+		elseif stats.Infusion == "Frost" then
+			Services.EnemyService.ApplySlow(e, 2)
+		end
+	end
 	return dealt
+end
+
+function CombatService.InCombat(player)
+	return os.clock() - (lastCombat[player] or 0) < 6
 end
 
 local function castRay(origin, direction, range)
@@ -115,6 +131,7 @@ function CombatService.Attack(player, aim)
 	if not root or not cooldownReady(player, "Attack", weapon.Cooldown) then
 		return
 	end
+	Services.PropertyService.Dismount(player)
 
 	Remotes.Effect:FireAllClients("Swing", character, weapon.Type)
 
@@ -123,7 +140,7 @@ function CombatService.Attack(player, aim)
 		local hitPos, e = castRay(origin, direction, weapon.Range)
 		Remotes.Effect:FireAllClients("Bolt", origin, hitPos, weapon.Glow or weapon.Color, 0.6)
 		if e then
-			hit(player, e, weapon.Damage, "Spell")
+			hit(player, e, stats.WeaponDamage, "Spell")
 		end
 		return
 	end
@@ -143,7 +160,9 @@ function CombatService.Attack(player, aim)
 		return a.Dist < b.Dist
 	end)
 	for i = 1, math.min(#candidates, MAX_MELEE_TARGETS[weapon.Type] or 2) do
-		hit(player, candidates[i].E, weapon.Damage, "Physical")
+		local target = candidates[i].E
+		hit(player, target, stats.WeaponDamage, "Physical")
+		Services.EnemyService.Knockback(target, target.Root.Position - root.Position, weapon.Type == "Axe" and 22 or 12)
 	end
 end
 
@@ -154,7 +173,8 @@ function abilityHandlers.Whirlwind(player, stats, root)
 	Remotes.Effect:FireAllClients("Burst", root.Position - Vector3.new(0, 2.5, 0), ability.Radius, ability.Color)
 	Remotes.Effect:FireAllClients("Spin", player.Character)
 	for _, e in ipairs(Services.EnemyService.InRadius(root.Position, ability.Radius)) do
-		hit(player, e, stats.Weapon.Damage * ability.WeaponMultiplier, "Physical")
+		hit(player, e, stats.WeaponDamage * ability.WeaponMultiplier, "Physical")
+		Services.EnemyService.Knockback(e, e.Root.Position - root.Position, 30)
 	end
 end
 
@@ -199,6 +219,7 @@ function CombatService.UseAbility(player, abilityId, aim)
 		return { ok = false }
 	end
 
+	Services.PropertyService.Dismount(player)
 	handler(player, stats, root, direction, data)
 
 	if stats.Flags.ArcaneEcho and math.random() < 0.25 then
@@ -249,6 +270,7 @@ function CombatService.DamagePlayer(player, amount, _sourceEnemy)
 		Remotes.Effect:FireAllClients("Ward", character)
 	end
 	damage = math.floor(damage + 0.5)
+	lastCombat[player] = os.clock()
 	if damage > 0 then
 		humanoid:TakeDamage(damage)
 		Remotes.Effect:FireClient(player, "Hurt", damage)
@@ -262,6 +284,7 @@ function CombatService.Init(services)
 	end)
 	Players.PlayerRemoving:Connect(function(player)
 		lastUsed[player] = nil
+		lastCombat[player] = nil
 		empoweredUntil[player] = nil
 		wardReadyAt[player] = nil
 	end)

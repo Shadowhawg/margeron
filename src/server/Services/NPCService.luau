@@ -126,19 +126,39 @@ local function buildDialogue(player, npcId, completed)
 	elseif npcId == "Mystic" then
 		local cost = Services.SkillService.RespecCost(data)
 		table.insert(options, { Id = "respec", Label = "Reshape my path. (Reset skills: " .. cost .. " gold)" })
+		table.insert(
+			options,
+			{ Id = "reshape", Label = "Change how I look. (" .. Services.CharacterService.ReshapeCost .. " gold)" }
+		)
+	elseif npcId == "Trader" then
+		table.insert(options, { Id = "trade", Label = "I have goods to sell." })
+	elseif npcId == "Farmer" then
+		table.insert(options, { Id = "seeds", Label = "I need seeds." })
+	elseif npcId == "LandSteward" then
+		table.insert(options, { Id = "estate", Label = "Show me the deeds." })
+	elseif npcId == "Stablemaster" then
+		table.insert(options, { Id = "stable", Label = "Show me your horses and livestock." })
+	elseif npcId == "Herald" then
+		table.insert(options, { Id = "hall", Label = "Enter the Hall. (Elections and decrees)" })
 	end
 	table.insert(options, { Id = "bye", Label = "Farewell." })
 
+	local root = npcRoots[npcId]
 	return {
 		NPC = npcId,
 		Name = npc.Name,
 		Role = npc.Role,
 		Text = text,
 		Options = options,
+		Position = root and root.Position or nil,
+		IsObject = npc.IsObject,
 	}
 end
 
 local function isNear(player, npcId)
+	if type(npcId) ~= "string" then
+		return false
+	end
 	local _, character = Services.PlayerService.GetHumanoid(player)
 	local root = character and character:FindFirstChild("HumanoidRootPart")
 	local npcRoot = npcRoots[npcId]
@@ -151,6 +171,17 @@ end
 function NPCService.Talk(player, npcId)
 	if not Services.PlayerService.GetData(player) or not isNear(player, npcId) then
 		return
+	end
+	-- Turn to face the player.
+	local npcRoot = npcRoots[npcId]
+	local _, character = Services.PlayerService.GetHumanoid(player)
+	local playerRoot = character and character:FindFirstChild("HumanoidRootPart")
+	if npcRoot and playerRoot and not World.NPCs[npcId].IsObject then
+		local model = npcRoot.Parent
+		local pivot = model:GetPivot()
+		model:PivotTo(
+			CFrame.lookAt(pivot.Position, Vector3.new(playerRoot.Position.X, pivot.Position.Y, playerRoot.Position.Z))
+		)
 	end
 	local completed = Services.QuestService.OnTalk(player, npcId)
 	Remotes.Dialogue:FireClient(player, buildDialogue(player, npcId, completed))
@@ -203,11 +234,26 @@ function NPCService.Choose(player, npcId, optionId)
 	elseif optionId == "respec" and npcId == "Mystic" then
 		local result = Services.SkillService.Respec(player)
 		return { close = true, message = result.message }
+	elseif optionId == "reshape" and npcId == "Mystic" then
+		local result = Services.CharacterService.BeginReshape(player)
+		return { close = true, message = result.message, open = result.open }
+	elseif optionId == "trade" and npcId == "Trader" then
+		return { open = "Trader" }
+	elseif optionId == "seeds" and npcId == "Farmer" then
+		return { open = "Seeds" }
+	elseif optionId == "estate" and npcId == "LandSteward" then
+		return { open = "Estate" }
+	elseif optionId == "stable" and npcId == "Stablemaster" then
+		return { open = "Stable" }
+	elseif optionId == "hall" and npcId == "Herald" then
+		return { open = "Government", args = Services.GovernmentService.GetState(player) }
 	elseif optionId == "back" then
 		return { dialogue = buildDialogue(player, npcId, nil) }
 	end
 	return { close = true }
 end
+
+NPCService.IsNear = isNear
 
 function NPCService.Init(services)
 	Services = services

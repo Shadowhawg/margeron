@@ -92,19 +92,111 @@ Tiers unlock at levels 1 / 3 / 6 / 10, and nodes have prerequisites. Seer Ilsa r
 | Founder's Title | Game Pass | Cosmetic |
 | Capes, Auras | Developer Product (one-time unlock) | Cosmetic |
 | Gold pouches | Developer Product (consumable) | Convenience |
+| Artisan's Focus (1 hour) | Developer Product (consumable) | Crafting boost |
+| Growth Tonic | Developer Product (consumable) | Instantly ripens crops |
+| Master Artisan | Game Pass | Permanent crafting boost |
+| Shadowmare | Game Pass | Premium horse (same top speed as the best gold horse) |
 
 No paid random items (loot boxes), so there are no odds-disclosure requirements. Every receipt is
 recorded to prevent double-granting.
 
-## World
+## Story: "The Unremembered"
+
+The player is spoken to directly from the first second. A voice wakes you on a riverbank:
+*"Breathe. ...Good. You still remember how to do that, at least."* You have no memory and no face, so
+character creation happens as you look into the water (*"Tell me who you see"*).
+
+The voice turns out to be **what is left of your own former self**. You were the commander of the
+Ashen Guard, seven soldiers who climbed Cinder Peak to bind the Mother of Ash. Only you came back,
+and the binding cost your memory and your name. Each main quest unlocks an **Echo**, a memory cutscene
+that reveals another piece:
+
+| Quest | Echo | Reveal |
+| --- | --- | --- |
+| Teeth in the Woods | I: The Burning Wood | You've seen this before; you never ran |
+| Arms for the Watch | II: A Blade With a Name | You were a warrior for a very long time |
+| The Redfang Problem | III: What Was Buried | Someone is digging up what *you* buried |
+| Whispers Below | IV: The Ashen Guard | The truth about the seal and the voice |
+| The Ashen Wake | V: Oathbreaker | The Mother knows you, and you have a choice about who you become |
+
+The ending of chapter one deliberately points at the player-driven systems: *"Build a home. Earn a
+name. Rule this valley if you want to."* Chapter two (the Mother of Ash) continues from Echo V.
+
+## Character creation
+Six races, each with a passive bonus: Riverfolk (+10% XP), Highlander (-8% damage taken), Sylvan
+(+12% spell power, pointed ears), Ironblood (+10% weapon damage, tusks), Deepkin (+20 HP, +10% gold,
+short and stocky), Cindertouched (+6% crit, ember eyes). Players also choose gender, height and build
+sliders (scaled within each race's range), skin tone (per-race palette), 9 hair styles, 10 hair colors,
+5 beards and 8 outfits. Seer Ilsa can reshape your appearance later for gold.
+
+## World & exploration
+A 3,600 × 3,600 stud open world generated from config: rolling hills, a mountain border, a volcano,
+a winding river with bridges, three lakes (one with an island shrine), forests, snowfields and marsh.
+* **Regions:** Riverwatch (walled town), Greenmeadow (farmland and property plots) and 7 combat zones
+  from level 1 to 15.
+* **12 landmarks** grant XP when discovered and become fast-travel points on the map (M).
+* **Gathering:** about 350 herb and ore spots, placed by biome.
+* **Day/night:** a 24-minute cycle.
+
 | Zone | Levels | Enemies |
 | --- | --- | --- |
-| Riverwatch (town) | Safe | NPCs: Elder Maren, Brann, Ysolde, Seer Ilsa, Bounty Board |
-| Whisperwood | 1–3 | Wolves |
-| Redfang Camp | 3–5 | Bandits, Grisk the Redfang (elite) |
-| Hollow Crypt | 6–8 | Hollow Dead |
+| Whisperwood | 1-3 | Wolves |
+| Redfang Camp | 3-5 | Bandits, Grisk the Redfang (elite) |
+| Hollow Crypt | 6-8 | Hollow Dead |
+| Mirelake Marsh | 7-9 | Bog Lurkers |
 | Cinder Peak | 9+ | The Ashen Wyrmling (boss) |
-| Frosthollow | 10+ | Frost Trolls |
+| Frosthollow | 10-12 | Frost Trolls |
+| Ruins of Vael | 12-15 | Ruin Sentinels |
+
+## Crafting
+Simple to start, with lots of room for creativity:
+* **Forge.** Smelt ore into ingots, forge 5 unique weapons, temper any weapon (+8% damage per level,
+  up to +5), and **infuse** one effect per weapon (Ember burn, Frost slow, Venom poison, Vampiric
+  lifesteal, Fortune gold, Arcane spell power). Combined with skills and potions, this makes for a lot
+  of build combinations.
+* **Alchemy (discovery).** Every ingredient has 3 hidden effects. Mixing 2-3 ingredients makes a potion
+  of every effect they share. Players learn effects by experimenting or by tasting. Ten effects
+  (healing, regeneration, strength, magic, speed, resistance, precision, fortune, insight, vigor) give
+  hundreds of combinations, and potency rises with crafting level.
+* **Cooking.** Farm produce and animal goods become long-lasting food buffs.
+* **Workbench.** Fertilizer, leather, and dyed woven capes, where the herb you choose sets the color.
+* **Crafting level.** Up to 30. It unlocks recipes and raises potion potency.
+* **Robux boosts.** *Artisan's Focus* (1 hour of double crafting XP plus a 25% chance of double output)
+  and the *Master Artisan* pass (+1 potion potency and a 10% chance of double output, permanently).
+
+## Property, farming & livestock
+* **Homes** (gold sinks): Riverside Cottage 2,500 → Greenmeadow Farmhouse 12,000 → Lakeside Manor
+  40,000. Upgrading trades in your old home for 50% of its price. A home is a deed: it's built on a free
+  Greenmeadow plot in whatever server you join, with your name on the sign.
+* Each tier adds **farm fields** (2/6/10), **animal pens** (2/6/12) and **crafting stations**. The Manor
+  has its own forge and alchemy lab.
+* **Farming:** buy seeds from Old Tomas, plant, and come back when they're ripe. Crops grow in real
+  time, even while you're offline. Fertilizer halves the growing time. Moonpetal and Emberroot are
+  farmable alchemy herbs.
+* **Livestock:** chickens (eggs), sheep (wool) and cows (milk) produce goods over time.
+* **Horses:** four horses with increasing speed (H to ride). One of them, the Shadowmare, is a premium
+  Robux horse.
+
+## Local government
+Riverwatch is ruled by an elected **Lord or Lady**, shared across *every* server through DataStores.
+* **Terms** last 3 days. During a term, eligible players (level 8, 10 Renown, 2,000 gold fee) stand
+  for the next term by pledging a decree. Everyone level 3 or higher gets one vote per term at the
+  Town Hall.
+* **The winner** can set the purchase tax (0-15%), choose the active **decree** (Harvest Festival,
+  Bounty Edict, Open Markets, Artisans' Charter, Veterans' Due), and appoint a **Steward** and a
+  **Captain of the Watch** by username. They can also claim the **treasury**: taxes and filing fees
+  collected across all servers.
+* **Officials** get titles over their heads, shop discounts and a golden aura (Lord). The statue
+  plaque in town names the current ruler.
+* **Why it matters:** this gives top players a social, competitive goal that changes the game for
+  everyone.
+
+## Presentation
+* **Cutscenes:** letterbox bars, scripted camera moves, title cards, and typewriter narration that
+  personalizes lines with the player's name and race.
+* **NPC conversations:** a cinematic over-the-shoulder shot of the NPC, who turns to face you.
+* **Adaptive music:** picks a track for town, farmland, each biome, combat, boss fights and cutscenes,
+  with crossfades and ambience layers. Track IDs are set in `Config/Music`.
 
 ## Roadmap
 
@@ -118,7 +210,6 @@ recorded to prevent double-granting.
 
 **v0.3, retention.**
 * Dungeons: instanced crypt runs with a boss at the end
-* Crafting with materials
 * World events (rotating: Blood Moon wolf surge, bandit raid on Riverwatch), scheduled server-wide
 * Weekly bounty chains with a story wrapper
 
@@ -126,7 +217,7 @@ recorded to prevent double-granting.
 * Chapter 2: "The Mother of Ash" (new region and levels 15–25)
 * Parties and guilds, leaderboards (Renown, kills)
 * Seasonal cosmetics and Seasonal Renown tracks
-* Mounts (cosmetic plus speed in the open world)
+* More mounts and mounted combat
 
 ## Success metrics to watch (Creator Dashboard)
 * Day-1 / Day-7 retention (targets: 20%+ / 5%+ for an early RPG)

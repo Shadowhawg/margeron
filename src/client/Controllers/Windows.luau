@@ -101,4 +101,12 @@ function Windows.Init()
 	State.Changed:Connect(Windows.Render)
 end
 
+function Windows.Start()
+	-- The server can open windows too (crafting stations, planting a field).
+	local Remotes = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared").Remotes)
+	Remotes.Open.OnClientEvent:Connect(function(name, args)
+		Windows.Open(name, args)
+	end)
+end
+
 return Windows

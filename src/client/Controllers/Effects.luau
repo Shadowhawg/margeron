@@ -63,35 +63,118 @@ local function floatingText(position, text, color, size, duration)
 	Debris:AddItem(anchor, duration + 0.1)
 end
 
+-- Built-in Roblox sounds (ship with every client, no upload needed).
+local SOUNDS = {
+	Swing = "rbxasset://sounds/swordslash.wav",
+	Hit = "rbxasset://sounds/swordlunge.wav",
+	Equip = "rbxasset://sounds/unsheath.wav",
+}
+
+local function playSound(id, position, volume, pitch)
+	local anchor = effectPart({ Size = Vector3.new(0.1, 0.1, 0.1), Transparency = 1, Position = position })
+	local sound = Instance.new("Sound")
+	sound.SoundId = id
+	sound.Volume = volume or 0.6
+	sound.PlaybackSpeed = pitch or (0.9 + math.random() * 0.2)
+	sound.RollOffMaxDistance = 120
+	sound.Parent = anchor
+	sound:Play()
+	Debris:AddItem(anchor, 3)
+end
+Effects.PlaySound = playSound
+
+local originalJoints = {}
+setmetatable(originalJoints, { __mode = "k" })
+
+local function tweenJoint(joint, poses, times)
+	local base = originalJoints[joint]
+	if not base then
+		base = joint.C0
+		originalJoints[joint] = base
+	end
+	for i, pose in ipairs(poses) do
+		local t = TweenService:Create(
+			joint,
+			TweenInfo.new(times[i], Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+			{ C0 = base * pose }
+		)
+		t:Play()
+		t.Completed:Wait()
+	end
+	TweenService:Create(joint, TweenInfo.new(0.18), { C0 = base }):Play()
+end
+
+-- Swing the whole arm (shoulder joint) together with the weapon in the hand.
 local function swing(character, weaponType)
-	local gear = character and character:FindFirstChild("MargeronGear")
+	if not character then
+		return
+	end
+	local upperArm = character:FindFirstChild("RightUpperArm")
+	local shoulder = upperArm and upperArm:FindFirstChild("RightShoulder")
+	local isR15 = shoulder ~= nil
+	if not shoulder then
+		local torso = character:FindFirstChild("Torso")
+		shoulder = torso and torso:FindFirstChild("Right Shoulder")
+	end
+	local gear = character:FindFirstChild("MargeronGear")
 	local weapon = gear and gear:FindFirstChild("Weapon")
 	local handle = weapon and weapon:FindFirstChild("Handle")
 	local grip = handle and handle:FindFirstChild("WeaponGrip")
-	if not grip then
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if root then
+		playSound(weaponType == "Staff" and SOUNDS.Equip or SOUNDS.Swing, root.Position, 0.45)
+	end
+
+	local function axis(deg)
+		-- R15 shoulders raise forward around X; R6 shoulders around Z.
+		return isR15 and CFrame.Angles(math.rad(deg), 0, 0) or CFrame.Angles(0, 0, math.rad(deg))
+	end
+	if shoulder then
+		if weaponType == "Staff" then
+			task.spawn(tweenJoint, shoulder, { axis(95), axis(80) }, { 0.08, 0.12 })
+		else
+			task.spawn(
+				tweenJoint,
+				shoulder,
+				{ axis(155) * CFrame.Angles(0, math.rad(-20), 0), axis(25) * CFrame.Angles(0, math.rad(30), 0) },
+				{ 0.09, 0.11 }
+			)
+		end
+	end
+	if grip then
+		if weaponType == "Staff" then
+			tweenJoint(
+				grip,
+				{ CFrame.new(0, 0, 0.6), CFrame.new(0, 0, -1) * CFrame.Angles(math.rad(-15), 0, 0) },
+				{ 0.08, 0.12 }
+			)
+		else
+			tweenJoint(
+				grip,
+				{ CFrame.Angles(math.rad(-40), 0, math.rad(-15)), CFrame.Angles(math.rad(60), 0, math.rad(20)) },
+				{ 0.09, 0.11 }
+			)
+		end
+	end
+end
+
+local function spin(character)
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not root then
 		return
 	end
-	local base = originalGrips[grip]
-	if not base then
-		base = grip.C0
-		originalGrips[grip] = base
-	end
-	local windBack, strike
-	if weaponType == "Staff" then
-		windBack = base * CFrame.new(0, 0, 0.6)
-		strike = base * CFrame.new(0, 0, -1) * CFrame.Angles(math.rad(-15), 0, 0)
-	else
-		windBack = base * CFrame.Angles(math.rad(-50), 0, math.rad(-20))
-		strike = base * CFrame.Angles(math.rad(70), 0, math.rad(25))
-	end
-	local t1 = TweenService:Create(grip, TweenInfo.new(0.07), { C0 = windBack })
-	local t2 = TweenService:Create(grip, TweenInfo.new(0.1, Enum.EasingStyle.Quad), { C0 = strike })
-	local t3 = TweenService:Create(grip, TweenInfo.new(0.15), { C0 = base })
-	t1:Play()
-	t1.Completed:Wait()
-	t2:Play()
-	t2.Completed:Wait()
-	t3:Play()
+	playSound(SOUNDS.Swing, root.Position, 0.7, 0.8)
+	local trail = effectPart({
+		Shape = Enum.PartType.Cylinder,
+		Size = Vector3.new(0.3, 10, 10),
+		CFrame = CFrame.new(root.Position) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = Color3.fromRGB(230, 230, 240),
+		Transparency = 0.5,
+		Material = Enum.Material.ForceField,
+	})
+	TweenService:Create(trail, TweenInfo.new(0.35), { Size = Vector3.new(0.3, 24, 24), Transparency = 1 }):Play()
+	Debris:AddItem(trail, 0.4)
+	swing(character, "Sword")
 end
 
 local function bolt(from, to, color, size)
@@ -175,13 +258,12 @@ local handlers = {
 	Swing = function(character, weaponType)
 		swing(character, weaponType)
 	end,
-	Spin = function(character)
-		swing(character, "Sword")
-	end,
+	Spin = spin,
 	Bolt = bolt,
 	Burst = burst,
 	Windup = windup,
 	DamageNumber = function(position, amount, crit)
+		playSound(SOUNDS.Hit, position, crit and 0.8 or 0.5, crit and 0.8 or nil)
 		if crit then
 			floatingText(position, amount .. "!", Color3.fromRGB(255, 220, 60), 34, 0.9)
 		else
@@ -202,6 +284,26 @@ local handlers = {
 		sphereFlash(character, Color3.fromRGB(120, 170, 255), 9)
 	end,
 	Hurt = hurt,
+	Discovery = function(name, xp)
+		Notifications.Banner("Discovered", name .. "   (+" .. xp .. " XP)")
+	end,
+	Drink = function(character, kind)
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if root then
+			burst(
+				root.Position - Vector3.new(0, 2.5, 0),
+				5,
+				kind == "Food" and Color3.fromRGB(240, 200, 120) or Color3.fromRGB(120, 230, 150)
+			)
+		end
+	end,
+	Crafted = function()
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		if root then
+			playSound(SOUNDS.Equip, root.Position, 0.5)
+			sphereFlash(player.Character, Color3.fromRGB(255, 220, 140), 7)
+		end
+	end,
 	Text = function(text)
 		Notifications.Show(text, "Success")
 	end,
@@ -217,7 +319,51 @@ function Effects.Init()
 	hurtEffect.Parent = Lighting
 end
 
+-- Riders sit on their horse: play the character's own sit animation while mounted.
+local mountTracks = {}
+setmetatable(mountTracks, { __mode = "k" })
+
+local function updateMountPose(character)
+	local mounted = character:GetAttribute("Mounted") == true
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local animator = humanoid and humanoid:FindFirstChildOfClass("Animator")
+	if mounted and animator and not mountTracks[character] then
+		local animate = character:FindFirstChild("Animate")
+		local sit = animate and animate:FindFirstChild("sit")
+		local anim = sit and sit:FindFirstChildOfClass("Animation")
+		if anim then
+			local track = animator:LoadAnimation(anim)
+			track.Priority = Enum.AnimationPriority.Action
+			track.Looped = true
+			track:Play()
+			mountTracks[character] = track
+		end
+	elseif not mounted and mountTracks[character] then
+		mountTracks[character]:Stop()
+		mountTracks[character] = nil
+	end
+end
+
+local function watchCharacter(character)
+	character:GetAttributeChangedSignal("Mounted"):Connect(function()
+		updateMountPose(character)
+	end)
+	updateMountPose(character)
+end
+
+local function watchPlayer(p)
+	p.CharacterAdded:Connect(watchCharacter)
+	if p.Character then
+		watchCharacter(p.Character)
+	end
+end
+
 function Effects.Start()
+	for _, p in ipairs(Players:GetPlayers()) do
+		watchPlayer(p)
+	end
+	Players.PlayerAdded:Connect(watchPlayer)
+
 	Remotes.Effect.OnClientEvent:Connect(function(kind, ...)
 		local handler = handlers[kind]
 		if handler then

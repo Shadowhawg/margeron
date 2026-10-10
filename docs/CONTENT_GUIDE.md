@@ -77,6 +77,49 @@ real models in `ServerStorage` and have `ModelBuilder.Creature` / `ModelBuilder.
 those by name, falling back to the part-built version. Enemy models need a `HumanoidRootPart`
 and a `Humanoid`.
 
+## Story and cutscenes
+
+`Config/Story.luau`. A cutscene is a list of camera shots with lines of narration. Camera points are
+either world positions (Y = height above the ground there) or anchored to the player or an NPC.
+`{name}` and `{race}` are filled in per player. Link a cutscene to a quest in `Story.QuestEchoes`
+and it plays when the quest is turned in (and appears under Journal → Memories).
+
+## Races and character options
+
+`Config/Races.luau`: add a race (height/width ranges, skin palette, features, stat bonus), a hair
+style (also add a builder in `server/Services/AppearanceService.luau`), hair colors or outfits.
+Hair styles can instead point at a Roblox catalog accessory with `AccessoryId`.
+
+## Crafting
+
+`Config/Crafting.luau`:
+* **Recipes:** station, inputs, output (material, weapon, cosmetic or food), level, XP.
+* **Effects:** the potion/food effects. New ones need a `Stat` that exists in `Stats.luau`.
+* **Ingredients:** add `Effects = { "A", "B", "C" }` to any material in `Config/Items` and it becomes
+  an alchemy ingredient automatically. The tests check that every effect is brewable.
+* **Infusions:** new weapon infusions. Their on-hit behavior lives in `CombatService` (`hit`).
+
+## Property, farming and animals
+
+`Config/Property.luau`: home tiers (price, fields, animal slots, stations), plot positions, crops
+(seed, grow time, yield), livestock (product, interval) and horses (price, speed).
+
+## Government
+
+`Config/Government.luau`: term length, requirements, tax limits, official discounts and decrees.
+A new decree needs its effect implemented where it applies (search for `DecreeActive`).
+
+## Music
+
+`Config/Music.luau`: paste Roblox audio IDs. Contexts fall back to each other, so start with one
+"Wilds" track and add more over time.
+
+## World
+
+`Config/World.luau`: zones, landmarks (Kind = Tower, Stones, ElderTree, Overlook, Shrine, Hut,
+Wreck, Colossus, Mine, Arch), lakes, the river, the volcano, roads and NPCs. `tests/run.sh` checks
+that everything lands on dry land after you move things around.
+
 ## Balance knobs
 
 `Config/GameConfig.luau`: XP curve inputs, health per level, respec cost, bounty board size and

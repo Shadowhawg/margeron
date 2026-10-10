@@ -25,6 +25,9 @@ local data = {
 	Renown = 0,
 	Stats = { Kills = 0, QuestsCompleted = 0, Deaths = 0 },
 	Purchases = {},
+	Story = { PrologueSeen = false, Echoes = {} },
+	Crafting = { XP = 0, Level = 1, Known = {}, Temper = {}, Infusions = {} },
+	Discoveries = {},
 }
 local notes = {}
 local Services = {}
@@ -63,6 +66,16 @@ Services.PlayerService = {
 		}
 	end,
 }
+Services.GovernmentService = {
+	DecreeActive = function()
+		return false
+	end,
+}
+Services.NPCService = {
+	IsNear = function()
+		return true
+	end,
+}
 Services.WorldService = {
 	GetNPCPosition = function()
 		return Vector3.new(14, 0, 18)
@@ -85,12 +98,15 @@ Services.QuestService.Init(
 
 local Q = Services.QuestService
 Q.GrantAutomaticQuests(player)
+check(data.Quests.Active.MQ1 == nil, "story waits for the prologue")
+data.Story.PrologueSeen = true
+Q.GrantAutomaticQuests(player)
 check(data.Quests.Active.MQ1 ~= nil, "MQ1 auto-granted")
 check(data.TrackedQuest == "MQ1", "MQ1 tracked")
 
 local done = Q.OnTalk(player, "Elder")
 check(#done == 1 and data.Quests.Completed.MQ1, "MQ1 completes on talking to Elder")
-check(data.XP == 50 and data.Gold == 35, "MQ1 rewards")
+check(data.XP == 50 and data.Gold == 50, "MQ1 rewards")
 
 check(Q.Accept(player, "MQ2").ok, "accept MQ2")
 check(not Q.Accept(player, "MQ2").ok, "cannot accept twice")
@@ -107,6 +123,18 @@ check(data.Quests.Active.MQ2 ~= nil, "MQ2 not turned in at wrong NPC")
 Q.OnTalk(player, "Elder")
 check(data.Quests.Completed.MQ2, "MQ2 turned in")
 check(data.Level == 2, "level 2 after MQ2 (xp " .. data.XP .. ")")
+check(data.Story.Echoes.Echo1 == true, "MQ2 unlocks the first memory")
+
+-- Event objectives (alchemy side quest)
+check(Q.Accept(player, "SQ_Herbs").ok, "accept herbs quest")
+Q.OnEvent(player, "Gather")
+Q.OnEvent(player, "Gather")
+Q.OnEvent(player, "Brew")
+check(not QuestRules.IsReady(data, "SQ_Herbs"), "herbs quest needs 3 gathers")
+Q.OnEvent(player, "Gather")
+check(QuestRules.IsReady(data, "SQ_Herbs"), "herbs quest ready")
+Q.OnTalk(player, "Mystic")
+check(data.Quests.Completed.SQ_Herbs and (data.Materials.Moonpetal or 0) >= 2, "herbs quest rewards materials")
 
 -- MQ3: talk objective + turn in at Blacksmith gives Steel Sword
 check(Q.Accept(player, "MQ3").ok, "accept MQ3")

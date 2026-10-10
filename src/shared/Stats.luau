@@ -4,6 +4,8 @@ local Config = script.Parent.Config
 local GameConfig = require(Config.GameConfig)
 local Skills = require(Config.Skills)
 local Items = require(Config.Items)
+local Races = require(Config.Races)
+local Crafting = require(Config.Crafting)
 
 local Stats = {}
 
@@ -17,7 +19,24 @@ function Stats.FindNode(nodeId)
 	return nil
 end
 
-function Stats.Compute(data)
+-- Current server time; works on both server and client.
+function Stats.Now()
+	return workspace:GetServerTimeNow()
+end
+
+-- Active (unexpired) buffs: { [effectId] = { Until, Magnitude } }
+function Stats.ActiveBuffs(data, now)
+	now = now or Stats.Now()
+	local active = {}
+	for effectId, buff in pairs(data.Buffs or {}) do
+		if buff.Until > now and Crafting.Effects[effectId] then
+			active[effectId] = buff
+		end
+	end
+	return active
+end
+
+function Stats.Compute(data, now)
 	local level = data.Level
 	local stats = {
 		MaxHealth = GameConfig.BaseHealth + GameConfig.HealthPerLevel * (level - 1),
@@ -30,6 +49,9 @@ function Stats.Compute(data)
 		WalkSpeed = GameConfig.BaseWalkSpeed,
 		CooldownReduction = 0,
 		BackstabBonus = 0,
+		Regeneration = 0,
+		GoldFind = 0,
+		XPBonus = 0,
 		Flags = {},
 		Abilities = {},
 	}
@@ -51,8 +73,41 @@ function Stats.Compute(data)
 		end
 	end
 
-	local weapon = Items.Weapons[data.EquippedWeapon] or Items.Weapons.IronSword
+	-- Race
+	local appearance = data.Appearance
+	local race = appearance and Races.Races[appearance.Race]
+	if race then
+		for stat, amount in pairs(race.Bonus) do
+			stats[stat] += amount
+		end
+	end
+
+	-- Potions and food
+	for effectId, buff in pairs(Stats.ActiveBuffs(data, now)) do
+		local effect = Crafting.Effects[effectId]
+		if effect.Stat then
+			stats[effect.Stat] += buff.Magnitude
+		end
+	end
+
+	-- Weapon, tempering and infusion
+	local weaponId = data.EquippedWeapon
+	local weapon = Items.Weapons[weaponId] or Items.Weapons.IronSword
 	stats.CritChance += weapon.CritBonus or 0
+	local craft = data.Crafting
+	local temper = craft and craft.Temper[weaponId] or 0
+	stats.WeaponDamage = weapon.Damage * (1 + Crafting.Temper.DamagePerLevel * temper)
+	stats.TemperLevel = temper
+	local infusion = craft and craft.Infusions[weaponId] or nil
+	stats.Infusion = infusion
+	if infusion == "Vampiric" then
+		stats.Lifesteal += 0.05
+	elseif infusion == "Arcane" then
+		stats.SpellPower += 0.15
+	elseif infusion == "Fortune" then
+		stats.GoldFind += 0.2
+	end
+	stats.MaxHealth = math.floor(stats.MaxHealth)
 	stats.DamageReduction = math.min(stats.DamageReduction, 0.6)
 	stats.CooldownReduction = math.min(stats.CooldownReduction, 0.5)
 	stats.Weapon = weapon

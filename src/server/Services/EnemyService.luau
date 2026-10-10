@@ -99,9 +99,20 @@ function spawnEnemy(zoneId, enemyId)
 		Scale = def.Scale,
 		Color = def.Color,
 		Wings = isWyrm,
-		EyeColor = isWyrm and Color3.fromRGB(255, 140, 30)
+		EyeColor = def.EyeColor
+			or (isWyrm and Color3.fromRGB(255, 140, 30))
 			or (enemyId == "Skeleton" and Color3.fromRGB(120, 200, 255) or nil),
 	})
+	-- Keep custom rigs upright and on their feet.
+	for _, state in ipairs({
+		Enum.HumanoidStateType.FallingDown,
+		Enum.HumanoidStateType.Ragdoll,
+		Enum.HumanoidStateType.Climbing,
+		Enum.HumanoidStateType.Seated,
+		Enum.HumanoidStateType.PlatformStanding,
+	}) do
+		info.Humanoid:SetStateEnabled(state, false)
+	end
 	local ground = randomPointInZone(zoneId)
 	model:PivotTo(
 		CFrame.new(ground + Vector3.new(0, info.GroundOffset + 0.5, 0))
@@ -261,7 +272,7 @@ local function resetEnemy(e)
 	e.Target = nil
 	e.Damagers = {}
 	e.HP = e.MaxHP
-	e.Burn = nil
+	e.Dot = nil
 	setBar(e)
 end
 
@@ -317,34 +328,37 @@ local function tickEnemy(e, now)
 		end
 	end
 
-	-- Burning (Conflagration)
-	if e.Burn then
-		if now >= e.Burn.Until or not e.Burn.Player.Parent then
-			e.Burn = nil
-			local fire = e.Root:FindFirstChild("BurnFire")
-			if fire then
-				fire:Destroy()
+	-- Damage over time (Conflagration, Ember and Venom infusions)
+	if e.Dot then
+		if now >= e.Dot.Until or not e.Dot.Player.Parent then
+			e.Dot = nil
+			local fx = e.Root:FindFirstChild("DotFX")
+			if fx then
+				fx:Destroy()
 			end
-		elseif now >= e.Burn.NextTick then
-			e.Burn.NextTick = now + 0.5
-			EnemyService.Damage(e, e.Burn.PerTick, e.Burn.Player, false)
+		elseif now >= e.Dot.NextTick then
+			e.Dot.NextTick = now + 0.5
+			EnemyService.Damage(e, e.Dot.PerTick, e.Dot.Player, false)
 		end
 	end
+
+	-- Frost slow
+	local slowed = (e.SlowUntil or 0) > now
+	e.Humanoid.WalkSpeed = def.WalkSpeed * (slowed and 0.65 or 1)
 end
 
 local function rewardPlayers(e)
 	local def = e.Def
+	local veterans = Services.GovernmentService.DecreeActive("VeteransDue") and 0.1 or 0
 	for player in pairs(e.Damagers) do
 		local root = playerRoot(player)
 		local data = Services.PlayerService.GetData(player)
-		if
-			player.Parent
-			and data
-			and root
-			and (root.Position - e.Root.Position).Magnitude <= GameConfig.XPShareRadius
-		then
-			local gold = math.random(def.Gold[1], def.Gold[2])
-			local parts = { "+" .. def.XP .. " XP", "+" .. gold .. " gold" }
+		local stats = Services.PlayerService.GetStats(player)
+		local inRange = root and (root.Position - e.Root.Position).Magnitude <= GameConfig.XPShareRadius
+		if player.Parent and data and stats and inRange then
+			local gold = math.floor(math.random(def.Gold[1], def.Gold[2]) * (1 + stats.GoldFind) + 0.5)
+			local xp = math.floor(def.XP * (1 + stats.XPBonus + veterans) + 0.5)
+			local parts = { "+" .. xp .. " XP", "+" .. gold .. " gold" }
 			data.Stats.Kills += 1
 			Services.PlayerService.AddGold(player, gold)
 			for materialId, chance in pairs(def.Drops or {}) do
@@ -355,7 +369,7 @@ local function rewardPlayers(e)
 			end
 			Remotes.Effect:FireClient(player, "Loot", e.Root.Position, table.concat(parts, "   "))
 			Services.QuestService.OnEnemyKilled(player, e.Id)
-			Services.PlayerService.AddXP(player, def.XP)
+			Services.PlayerService.AddXP(player, xp)
 		end
 	end
 end
@@ -421,22 +435,58 @@ function EnemyService.Damage(e, amount, player, crit)
 	return amount, false
 end
 
-function EnemyService.ApplyBurn(e, totalDamage, duration, player)
+-- Damage over time. kind = "Fire" | "Poison"
+function EnemyService.ApplyDot(e, totalDamage, duration, player, kind)
 	if e.Dead then
 		return
 	end
 	local ticks = math.max(1, math.floor(duration / 0.5))
-	e.Burn = {
+	e.Dot = {
 		PerTick = math.max(1, totalDamage / ticks),
 		Until = os.clock() + duration,
 		NextTick = os.clock() + 0.5,
 		Player = player,
 	}
-	if not e.Root:FindFirstChild("BurnFire") then
+	local old = e.Root:FindFirstChild("DotFX")
+	if old then
+		old:Destroy()
+	end
+	if kind == "Poison" then
+		local fx = Instance.new("ParticleEmitter")
+		fx.Name = "DotFX"
+		fx.Color = ColorSequence.new(Color3.fromRGB(110, 210, 70))
+		fx.LightEmission = 0.6
+		fx.Rate = 14
+		fx.Lifetime = NumberRange.new(0.6, 1)
+		fx.Speed = NumberRange.new(1, 2)
+		fx.Size = NumberSequence.new(0.5, 0)
+		fx.Parent = e.Root
+	else
 		local fire = Instance.new("Fire")
-		fire.Name = "BurnFire"
+		fire.Name = "DotFX"
 		fire.Size = 4
 		fire.Parent = e.Root
+	end
+end
+
+-- Backwards-compatible name used by Conflagration.
+function EnemyService.ApplyBurn(e, totalDamage, duration, player)
+	EnemyService.ApplyDot(e, totalDamage, duration, player, "Fire")
+end
+
+function EnemyService.ApplySlow(e, duration)
+	if not e.Dead then
+		e.SlowUntil = os.clock() + duration
+	end
+end
+
+function EnemyService.Knockback(e, direction, force)
+	if e.Dead or e.Def.Boss or e.Def.Elite then
+		return
+	end
+	local flat = Vector3.new(direction.X, 0, direction.Z)
+	if flat.Magnitude > 0.01 then
+		e.Root.AssemblyLinearVelocity += flat.Unit * force + Vector3.new(0, force * 0.3, 0)
 	end
 end
 

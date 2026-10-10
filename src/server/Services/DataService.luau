@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GameConfig = require(Shared.Config.GameConfig)
+local Races = require(Shared.Config.Races)
 local Util = require(Shared.Util)
 local Signal = require(script.Parent.Parent.Lib.Signal)
 
@@ -34,8 +35,34 @@ local TEMPLATE = {
 		Completed = 0,
 	},
 	Renown = 0,
-	Stats = { Kills = 0, QuestsCompleted = 0, Deaths = 0 },
+	Stats = { Kills = 0, QuestsCompleted = 0, Deaths = 0, Crafted = 0, Harvested = 0 },
 	Purchases = {},
+
+	-- Character creation
+	Appearance = Util.DeepCopy(Races.Default),
+	-- Story progress: prologue and unlocked memories
+	Story = { PrologueSeen = false, Echoes = {} },
+	-- Exploration: discovered landmark/zone ids
+	Discoveries = {},
+	-- Crafting: level, discovered ingredient effects, weapon tempering and infusions
+	Crafting = { XP = 0, Level = 1, Known = {}, Temper = {}, Infusions = {} },
+	-- Potions and food: { [key] = count }
+	Consumables = {},
+	-- Active buffs: { [effectId] = { Until = serverTime, Magnitude = n } }
+	Buffs = {},
+	CraftBoostUntil = 0,
+	-- Permanent Robux perks (game passes) recorded here as flags
+	Passes = {},
+	-- Property: home tier, farm fields, livestock and horses
+	Property = {
+		Home = "",
+		Fields = {},
+		Animals = {},
+		Horses = {},
+		ActiveHorse = "",
+	},
+	-- Local government participation
+	Gov = { VotedTerm = -1, RanTerm = -1 },
 }
 
 local DataService = {}

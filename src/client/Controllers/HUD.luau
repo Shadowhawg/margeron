@@ -9,6 +9,8 @@ local Abilities = require(Shared.Config.Abilities)
 local World = require(Shared.Config.World)
 local Items = require(Shared.Config.Items)
 local Leveling = require(Shared.Leveling)
+local Stats = require(Shared.Stats)
+local Crafting = require(Shared.Config.Crafting)
 local QuestRules = require(Shared.QuestRules)
 local Util = require(Shared.Util)
 local Create = require(script.Parent.Parent.UI.Create)
@@ -110,7 +112,7 @@ local function buildHotbar()
 		Position = UDim2.new(0.5, 0, 1, -16),
 		Size = UDim2.fromOffset(4 * 70 + 3 * 8, 70),
 		Parent = gui,
-	}, { Create.List(8, Enum.FillDirection.Horizontal) })
+	}, { Create.List(8, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Center) })
 
 	local entries = { { Id = "Attack", Name = "Attack", Key = "Click", Color = Theme.Accent } }
 	for _, abilityId in ipairs(Abilities.Order) do
@@ -196,13 +198,14 @@ local function buildMenu()
 		BackgroundTransparency = 1,
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -16, 0, 16),
-		Size = UDim2.fromOffset(4 * 92 + 3 * 6, 44),
+		Size = UDim2.fromOffset(5 * 92 + 4 * 6, 44),
 		Parent = gui,
 	}, { Create.List(6, Enum.FillDirection.Horizontal, Enum.HorizontalAlignment.Right) })
 	local buttons = {
 		{ "Skills", "K", "Skills" },
 		{ "Quests", "J", "Quests" },
 		{ "Inventory", "I", "Inventory" },
+		{ "Map", "M", "Map" },
 		{ "Store", "B", "Store" },
 	}
 	for i, b in ipairs(buttons) do
@@ -291,11 +294,8 @@ local function render(data)
 	saveWarning.Visible = not data.Persistent
 
 	for _, abilityId in ipairs(Abilities.Order) do
-		local slot = slots[abilityId]
-		local unlocked = stats.Abilities[abilityId] == true
-		slot.Frame.BackgroundTransparency = unlocked and 0.15 or 0.7
-		slot.Label.TextColor3 = unlocked and Theme.Text or Theme.Muted
-		slot.Label.Text = unlocked and Abilities[abilityId].Name or "Locked"
+		-- Only learned abilities appear on the hotbar.
+		slots[abilityId].Frame.Visible = stats.Abilities[abilityId] == true
 	end
 	local weapon = Items.Weapons[data.EquippedWeapon]
 	slots.Attack.Label.Text = weapon and weapon.Name or "Attack"
@@ -322,8 +322,57 @@ function HUD.IsOnCooldown(abilityId)
 	return cd ~= nil and os.clock() < cd.Ends
 end
 
+local buffFrame
+local function buildBuffs()
+	buffFrame = New("Frame", {
+		Name = "Buffs",
+		BackgroundTransparency = 1,
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0, 16, 1, -116),
+		Size = UDim2.fromOffset(330, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		Parent = gui,
+	}, { Create.List(4) })
+end
+
+local function renderBuffs()
+	local data = State.Data
+	if not data or not buffFrame then
+		return
+	end
+	Create.Clear(buffFrame)
+	local now = Stats.Now()
+	local order = 0
+	for effectId, buff in pairs(Stats.ActiveBuffs(data, now)) do
+		order += 1
+		local left = math.max(0, buff.Until - now)
+		local time = left >= 60 and (math.floor(left / 60) .. "m") or (math.floor(left) .. "s")
+		Create.Label(Crafting.Effects[effectId].Name .. "  " .. time, {
+			LayoutOrder = order,
+			Size = UDim2.fromOffset(220, 18),
+			TextSize = 13,
+			Font = Theme.BoldFont,
+			TextColor3 = Color3.fromRGB(150, 230, 160),
+			TextStrokeTransparency = 0.5,
+			Parent = buffFrame,
+		})
+	end
+	if (data.CraftBoostUntil or 0) > now then
+		Create.Label("Artisan's Focus  " .. math.floor((data.CraftBoostUntil - now) / 60) .. "m", {
+			LayoutOrder = 99,
+			Size = UDim2.fromOffset(220, 18),
+			TextSize = 13,
+			Font = Theme.BoldFont,
+			TextColor3 = Theme.Gold,
+			TextStrokeTransparency = 0.5,
+			Parent = buffFrame,
+		})
+	end
+end
+
 function HUD.Init()
 	gui = Create.Screen("HUD", 1)
+	buildBuffs()
 	buildVitals()
 	buildHotbar()
 	buildQuestTracker()
@@ -332,6 +381,12 @@ end
 
 function HUD.Start()
 	State.Observe(render)
+	task.spawn(function()
+		while true do
+			renderBuffs()
+			task.wait(1)
+		end
+	end)
 
 	RunService.RenderStepped:Connect(function()
 		local character = player.Character
@@ -363,6 +418,8 @@ function HUD.Start()
 			Windows.Toggle("Inventory")
 		elseif input.KeyCode == Enum.KeyCode.B then
 			Windows.Toggle("Store")
+		elseif input.KeyCode == Enum.KeyCode.M then
+			Windows.Toggle("Map")
 		end
 	end)
 end

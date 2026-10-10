@@ -11,19 +11,23 @@ an endless supply of procedurally generated bounties.
 
 | System | Status |
 | --- | --- |
-| Generated placeholder world: town, 5 zones, roads, river, lighting | ✅ |
-| Combat: melee cleave, staff bolts, crits, enemy wind-up telegraphs, boss area attacks | ✅ |
-| XP and levels (cap 50), gold, saving with session locking | ✅ |
-| Skill tree: Might / Arcana / Shadow, 18 nodes, 3 abilities, 5 unique mechanics, respec | ✅ |
-| Main story (6 quests) and 2 side quests with NPC dialogue | ✅ |
-| Bounty Board: endless generated bounties plus a Daily Contract, Renown titles | ✅ |
-| Weapons shop (gold), inventory, cosmetics (capes, auras, titles) | ✅ |
-| Robux store: Developer Products and Game Passes, Studio test purchases | ✅ |
-| Quest waypoint, NPC `!`/`?` markers, zone banners | ✅ |
+| Cinematic story: prologue, five memory cutscenes ("Echoes"), cutscene-style NPC conversations | ✅ |
+| Character creation: 6 races (each with a bonus), gender, height, build, skin, 9 hair styles, beards, outfits | ✅ |
+| Open world (3,600 × 3,600 studs): hills, mountains, volcano, river, lakes, forests, 8 regions, 12 landmarks | ✅ |
+| Exploration: discoveries (XP), world map (M), fast travel, day/night cycle | ✅ |
+| Combat: arm-swing attacks, knockback, telegraphed enemy attacks, bosses, weapon infusions | ✅ |
+| XP and levels, three-tree skill system (18 skills, 3 abilities), respec | ✅ |
+| Crafting: forge (smelt, forge, temper, infuse), alchemy (discover-by-mixing), cooking, workbench | ✅ |
+| Property: three home tiers on Greenmeadow plots, farm fields, livestock, horses you can ride (H) | ✅ |
+| Farming: 5 crops, growth over real time (also offline), fertilizer, harvest buffs | ✅ |
+| Local government: cross-server elections, Lord/Lady, tax, decrees, appointed Steward and Captain, treasury | ✅ |
+| Economy: trader (sell anything), seed shop, taxes, Robux store incl. crafting boosts and a premium horse | ✅ |
+| Main story (6 quests) + 8 side quests, endless Bounty Board, Daily Contract, Renown titles | ✅ |
+| Adaptive music system (town / wilds / combat / boss / cutscene) | ⚠️ needs track IDs, see below |
 | PC, mobile (touch buttons) and gamepad controls | ✅ |
 
-Everything visual is a **placeholder built from parts** so the game is playable right now. Swap in
-real models/maps whenever you're ready (see the content guide).
+Everything visual is a **placeholder built from parts**, so the game is playable right now. Swap in
+real models, maps and animations whenever you're ready (see the content guide).
 
 ## Setup (one time)
 
@@ -66,8 +70,28 @@ Enable Studio Access to API Services**.
 | --- | --- | --- | --- |
 | Attack (hold to repeat) | Left click | R2 | Attack button |
 | Abilities | 1 / 2 / 3 | X / Y / L2 | Ability buttons |
-| Talk / read | E | (prompt) | Tap prompt |
-| Skills / Journal / Inventory / Store | K / J / I / B | — | HUD buttons |
+| Ride / dismount horse | H | L1 | Ride button |
+| Drink best healing potion | Q | D-pad up | Inventory |
+| Talk / read / gather / use station | E | (prompt) | Tap prompt |
+| Pick a dialogue reply | 1-7 or click | | Tap |
+| Skills / Journal / Inventory / Map / Store | K / J / I / M / B | | HUD buttons |
+| Advance or skip cutscene text | Space / click | A | Tap |
+
+## Adding music (5 minutes)
+
+The adaptive music system is wired up, but Roblox audio has to be picked from the Creator Store, so
+the track IDs start empty. In Studio: **View → Toolbox → Audio**, search for things like "medieval
+village", "fantasy exploration", "epic battle", "dark ambient". Roblox's licensed music library is free
+to use. Right-click a track, choose **Copy Asset ID**, and paste it into `src/shared/Config/Music.luau`.
+Tracks fall back to each other, so even one "Wilds" track gives you music everywhere.
+
+## Notes for Studio testing
+
+* The world is generated each time a server starts (about 5 seconds), so the edit view is empty and
+  everything appears when you press Play.
+* Elections use 10-minute terms in Studio (3 days live) so you can test a full cycle.
+* For the smoothest cutscenes on a big map, select **Workspace** and turn **StreamingEnabled** off
+  (or keep it on for mobile memory; cutscenes request the area they show).
 
 ## Publishing and monetization checklist
 
@@ -85,15 +109,19 @@ Enable Studio Access to API Services**.
 src/
   shared/            ReplicatedStorage.Shared: used by server and client
     Config/          ALL game content and balance: edit these to change the game
+                     (Items, Enemies, World, Quests, Story, Races, Skills, Crafting, Property,
+                      Government, Music, Products, Bounties, GameConfig)
     Stats.luau       derives combat stats from level/skills/weapon
     QuestRules.luau  quest progress rules
     Remotes.luau     networking
   server/            ServerScriptService.Server
-    Services/        Data, Player, Combat, Enemy, Quest, Bounty, NPC, Shop, World, ...
-    Lib/             ModelBuilder (placeholder models), Signal
+    Services/        Data, Player, Character, Combat, Enemy, Quest, Bounty, NPC, World,
+                     Exploration, Crafting, Property, Market, Government, Shop, ...
+    Lib/             TerrainGen, Props, ModelBuilder (placeholder models), Signal
   client/            StarterPlayerScripts.Client
-    Controllers/     HUD, combat input, effects, dialogue, notifications, world markers
-    Panels/          Skills, Journal, Inventory, Store, Blacksmith, Bounty Board windows
+    Controllers/     HUD, combat input, cinematics, intro, dialogue, music, effects, markers
+    Panels/          Character creator, Skills, Journal, Inventory, Crafting, Estate, Stable,
+                     Seeds, Trader, Government, Map, Store, Blacksmith, Bounty Board
 ```
 
 ## Linting and formatting
@@ -105,8 +133,9 @@ stylua src     # format
 
 ## Tests
 
-Logic tests run outside Roblox: config cross-references, skill rules, quest flow, and the bounty
-generator across all levels. Install the Luau CLI once (`rokit add luau-lang/luau`), then:
+Logic tests run outside Roblox: config cross-references for every system, skill/quest/crafting
+rules, a quest flow simulation, the bounty generator across all levels, and the full terrain
+generator (checks that every town, NPC, zone, landmark and plot sits on dry land). Install the Luau CLI once (`rokit add luau-lang/luau`), then:
 
 ```sh
 ./tests/run.sh

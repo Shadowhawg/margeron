@@ -91,6 +91,66 @@ Items.Weapons = {
 		Description = "A veteran's weapon.",
 	},
 
+	-- Crafted at the forge (see Config/Crafting)
+	SilversteelBlade = {
+		Name = "Silversteel Blade",
+		Type = "Sword",
+		Damage = 26,
+		Cooldown = 0.6,
+		Range = 7.5,
+		LevelReq = 8,
+		Crafted = true,
+		Color = Color3.fromRGB(225, 230, 240),
+		Description = "Light, bright and very sharp.",
+	},
+	BonecarverAxe = {
+		Name = "Bonecarver Axe",
+		Type = "Axe",
+		Damage = 40,
+		Cooldown = 1.05,
+		Range = 8,
+		LevelReq = 9,
+		Crafted = true,
+		Color = Color3.fromRGB(215, 205, 180),
+		Description = "Hollow Dead bone, bound in iron.",
+	},
+	WyrmfangDagger = {
+		Name = "Wyrmfang Dagger",
+		Type = "Dagger",
+		Damage = 19,
+		Cooldown = 0.35,
+		Range = 6,
+		CritBonus = 0.15,
+		LevelReq = 10,
+		Crafted = true,
+		Color = Color3.fromRGB(90, 70, 60),
+		Glow = Color3.fromRGB(255, 120, 50),
+		Description = "Still warm. +15% crit chance.",
+	},
+	MarshwoodStaff = {
+		Name = "Marshwood Staff",
+		Type = "Staff",
+		Damage = 27,
+		Cooldown = 0.75,
+		Range = 55,
+		LevelReq = 10,
+		Crafted = true,
+		Color = Color3.fromRGB(110, 200, 120),
+		Description = "Grown, not carved. Scales with Spell Power.",
+	},
+	SentinelGreatblade = {
+		Name = "Sentinel Greatblade",
+		Type = "Sword",
+		Damage = 42,
+		Cooldown = 0.75,
+		Range = 8.5,
+		LevelReq = 14,
+		Crafted = true,
+		Color = Color3.fromRGB(150, 170, 200),
+		Glow = Color3.fromRGB(120, 180, 255),
+		Description = "Forged around a Sentinel's heart. It hums.",
+	},
+
 	-- Premium (Robux) weapons: strong but level-gated, and no stronger than the best gold weapon
 	-- for their level, so the game stays fair.
 	EmberBrand = {
@@ -124,6 +184,11 @@ Items.Cosmetics = {
 	CrimsonCape = { Name = "Crimson Cape", Slot = "Cape", Color = Color3.fromRGB(150, 20, 30), Premium = "CrimsonCape" },
 	ShadowCape = { Name = "Shadow Cape", Slot = "Cape", Color = Color3.fromRGB(25, 20, 35), Premium = "ShadowCape" },
 	RiverwatchCape = { Name = "Riverwatch Cape", Slot = "Cape", Color = Color3.fromRGB(40, 80, 140) },
+	WovenCapeRed = { Name = "Woven Cape (Crimson)", Slot = "Cape", Color = Color3.fromRGB(170, 40, 45) },
+	WovenCapeBlue = { Name = "Woven Cape (Moonlit)", Slot = "Cape", Color = Color3.fromRGB(70, 90, 170) },
+	WovenCapeGreen = { Name = "Woven Cape (Fen)", Slot = "Cape", Color = Color3.fromRGB(70, 120, 70) },
+	WovenCapeWhite = { Name = "Woven Cape (Frost)", Slot = "Cape", Color = Color3.fromRGB(230, 235, 240) },
+	WovenCapeAmber = { Name = "Woven Cape (Ember)", Slot = "Cape", Color = Color3.fromRGB(210, 120, 40) },
 	GoldenAura = { Name = "Golden Aura", Slot = "Aura", Color = Color3.fromRGB(255, 210, 80), Premium = "GoldenAura" },
 	FrostAura = { Name = "Frost Aura", Slot = "Aura", Color = Color3.fromRGB(150, 220, 255), Premium = "FrostAura" },
 
@@ -133,14 +198,110 @@ Items.Cosmetics = {
 	TitleWarden = { Name = "Warden of Riverwatch", Slot = "Title" },
 	TitleLegend = { Name = "Legend of Margeron", Slot = "Title" },
 	TitleFounder = { Name = "Founder", Slot = "Title", Premium = "FounderTitle" },
+	TitleExplorer = { Name = "Pathfinder", Slot = "Title" },
 }
 
+-- Materials: everything you can carry and stack.
+--   Category  Monster | Herb | Ore | Ingot | Crop | Seed | Animal | Crafted
+--   Value     gold a merchant pays for one
+--   Effects   alchemy effects (Config/Crafting.Effects), in discovery order. Ingredients need 3.
 Items.Materials = {
-	WolfPelt = { Name = "Wolf Pelt" },
-	BanditInsignia = { Name = "Redfang Insignia" },
-	BoneDust = { Name = "Bone Dust" },
-	TrollFat = { Name = "Troll Fat" },
-	WyrmScale = { Name = "Ashen Wyrm Scale" },
+	-- Monster parts
+	WolfPelt = { Name = "Wolf Pelt", Category = "Monster", Value = 4 },
+	BanditInsignia = { Name = "Redfang Insignia", Category = "Monster", Value = 6 },
+	BoneDust = {
+		Name = "Bone Dust",
+		Category = "Monster",
+		Value = 8,
+		Effects = { "Precision", "Insight", "Resistance" },
+	},
+	TrollFat = {
+		Name = "Troll Fat",
+		Category = "Monster",
+		Value = 15,
+		Effects = { "Regeneration", "Vigor", "Resistance" },
+	},
+	WyrmScale = {
+		Name = "Ashen Wyrm Scale",
+		Category = "Monster",
+		Value = 60,
+		Effects = { "FortifyDamage", "Resistance", "Fortune" },
+	},
+	BogHeart = {
+		Name = "Bog Heart",
+		Category = "Monster",
+		Value = 14,
+		Effects = { "Regeneration", "Swiftness", "Insight" },
+	},
+	SentinelCore = {
+		Name = "Sentinel Core",
+		Category = "Monster",
+		Value = 30,
+		Effects = { "FortifySpell", "Precision", "Vigor" },
+	},
+
+	-- Herbs (gathered in the wild; some can be farmed)
+	Moonpetal = {
+		Name = "Moonpetal",
+		Category = "Herb",
+		Value = 6,
+		Effects = { "RestoreHealth", "FortifySpell", "Insight" },
+	},
+	Bloodthistle = {
+		Name = "Bloodthistle",
+		Category = "Herb",
+		Value = 5,
+		Effects = { "RestoreHealth", "FortifyDamage", "Vigor" },
+	},
+	Frostcap = {
+		Name = "Frostcap",
+		Category = "Herb",
+		Value = 9,
+		Effects = { "Resistance", "FortifySpell", "Precision" },
+	},
+	Emberroot = {
+		Name = "Emberroot",
+		Category = "Herb",
+		Value = 14,
+		Effects = { "FortifyDamage", "Swiftness", "Fortune" },
+	},
+	Bogbloom = {
+		Name = "Bogbloom",
+		Category = "Herb",
+		Value = 8,
+		Effects = { "Regeneration", "Resistance", "Insight" },
+	},
+	Riverreed = {
+		Name = "Riverreed",
+		Category = "Herb",
+		Value = 3,
+		Effects = { "Swiftness", "Regeneration", "RestoreHealth" },
+	},
+
+	-- Ore and metal
+	IronOre = { Name = "Iron Ore", Category = "Ore", Value = 5 },
+	SilverOre = { Name = "Silver Ore", Category = "Ore", Value = 12 },
+	IronIngot = { Name = "Iron Ingot", Category = "Ingot", Value = 14 },
+	SilverIngot = { Name = "Silver Ingot", Category = "Ingot", Value = 30 },
+
+	-- Farming
+	Wheat = { Name = "Wheat", Category = "Crop", Value = 3 },
+	Carrot = { Name = "Carrot", Category = "Crop", Value = 4 },
+	Potato = { Name = "Potato", Category = "Crop", Value = 4 },
+	WheatSeeds = { Name = "Wheat Seeds", Category = "Seed", Value = 2 },
+	CarrotSeeds = { Name = "Carrot Seeds", Category = "Seed", Value = 3 },
+	PotatoSeeds = { Name = "Potato Seeds", Category = "Seed", Value = 3 },
+	MoonpetalSeeds = { Name = "Moonpetal Seeds", Category = "Seed", Value = 7 },
+	EmberrootSeeds = { Name = "Emberroot Seeds", Category = "Seed", Value = 20 },
+
+	-- Livestock goods
+	Egg = { Name = "Egg", Category = "Animal", Value = 4 },
+	Milk = { Name = "Milk", Category = "Animal", Value = 7 },
+	Wool = { Name = "Wool", Category = "Animal", Value = 9 },
+
+	-- Crafted goods
+	Fertilizer = { Name = "Fertilizer", Category = "Crafted", Value = 6 },
+	Leather = { Name = "Leather", Category = "Crafted", Value = 12 },
 }
 
 function Items.GetWeapon(id)

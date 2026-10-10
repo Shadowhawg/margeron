@@ -73,7 +73,7 @@ local function applyToCharacter(player)
 	local ratio = humanoid.Health / math.max(humanoid.MaxHealth, 1)
 	humanoid.MaxHealth = stats.MaxHealth
 	humanoid.Health = math.clamp(stats.MaxHealth * ratio, 1, stats.MaxHealth)
-	humanoid.WalkSpeed = stats.WalkSpeed
+	humanoid.WalkSpeed = Services.PropertyService.MountSpeed(player) or stats.WalkSpeed
 	Services.AppearanceService.Apply(player)
 end
 
@@ -152,7 +152,7 @@ local function onCharacterAdded(player, character)
 		end
 		task.delay(4, function()
 			if player.Parent then
-				player:LoadCharacter()
+				Services.CharacterService.Spawn(player)
 			end
 		end)
 	end)
@@ -187,7 +187,7 @@ local function onLoaded(player, data)
 	player.CharacterAppearanceLoaded:Connect(function()
 		applyToCharacter(player)
 	end)
-	player:LoadCharacter()
+	Services.CharacterService.Spawn(player)
 	PlayerService.Changed(player)
 end
 

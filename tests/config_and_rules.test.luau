@@ -42,6 +42,8 @@ for id, q in pairs(Quests) do
 				check(Items.Materials[o.Target] ~= nil, "collect target exists: " .. id)
 			elseif o.Kind == "Talk" then
 				check(World.NPCs[o.Target] ~= nil, "talk target exists: " .. id)
+			elseif o.Kind == "Event" then
+				check(type(o.Target) == "string", "event target: " .. id)
 			else
 				check(false, "unknown objective kind in " .. id)
 			end
@@ -177,6 +179,179 @@ for level = 1, 50 do
 	end
 end
 check((kinds.Kill or 0) > 0 and (kinds.Collect or 0) > 0, "both bounty kinds generated")
+
+-- New systems: crafting, property, story, races, quests events
+local Crafting = require(Shared.Config.Crafting)
+local Property = require(Shared.Config.Property)
+local Story = require(Shared.Config.Story)
+local Races = require(Shared.Config.Races)
+local Gov = require(Shared.Config.Government)
+local CraftingRules = require(Shared.CraftingRules)
+
+local function materialExists(id, label)
+	check(id == "Gold" or Items.Materials[id] ~= nil, label .. ": material " .. tostring(id))
+end
+for _, recipe in ipairs(Crafting.Recipes) do
+	check(Crafting.StationNames[recipe.Station] ~= nil, "recipe station " .. recipe.Id)
+	for id in pairs(recipe.Inputs) do
+		materialExists(id, "recipe " .. recipe.Id)
+	end
+	local out = recipe.Output
+	check(
+		(out.Material and Items.Materials[out.Material] ~= nil)
+			or (out.Weapon and Items.Weapons[out.Weapon] ~= nil)
+			or (out.Cosmetic and Items.Cosmetics[out.Cosmetic] ~= nil)
+			or (out.Food and Crafting.Foods[out.Food] ~= nil),
+		"recipe output exists " .. recipe.Id
+	)
+end
+for id, infusion in pairs(Crafting.Infusions) do
+	for m in pairs(infusion.Inputs) do
+		materialExists(m, "infusion " .. id)
+	end
+end
+for level = 1, Crafting.Temper.MaxLevel do
+	for m in pairs(Crafting.Temper.Cost(level)) do
+		materialExists(m, "temper cost")
+	end
+end
+for id, food in pairs(Crafting.Foods) do
+	for effect in pairs(food.Effects) do
+		check(Crafting.Effects[effect] ~= nil, "food effect " .. id .. " " .. effect)
+	end
+end
+-- Every ingredient effect is real, and every effect can actually be brewed (appears in 2+ ingredients).
+local effectCount = {}
+for id, m in pairs(Items.Materials) do
+	if m.Effects then
+		check(#m.Effects == 3, "ingredient has 3 effects " .. id)
+		for _, e in ipairs(m.Effects) do
+			check(Crafting.Effects[e] ~= nil, "ingredient effect exists " .. id .. " " .. e)
+			effectCount[e] = (effectCount[e] or 0) + 1
+		end
+	end
+end
+for effectId in pairs(Crafting.Effects) do
+	check((effectCount[effectId] or 0) >= 2, "effect is brewable " .. effectId)
+end
+-- Potion mixing
+local fx = CraftingRules.SharedEffects({ "Moonpetal", "Bloodthistle" })
+check(#fx == 1 and fx[1] == "RestoreHealth", "moonpetal + bloodthistle = restore health")
+check(#CraftingRules.SharedEffects({ "WolfPelt", "Moonpetal" }) == 0, "non-ingredient adds nothing")
+local key = CraftingRules.PotionKey({ "FortifyDamage", "RestoreHealth" }, 2)
+local info = CraftingRules.Describe(key)
+check(
+	info and #info.Effects == 2 and info.Name:find("Elixir") ~= nil,
+	"describe elixir " .. tostring(info and info.Name)
+)
+check(CraftingRules.Describe("F:Bread") ~= nil, "describe food")
+check(CraftingRules.Describe("P:Nonsense:1") == nil, "reject bad potion key")
+check(CraftingRules.Describe("garbage") == nil, "reject garbage key")
+
+for id, crop in pairs(Property.Crops) do
+	if id ~= "Order" then
+		check(Items.Materials[crop.Seed] ~= nil, "crop seed exists " .. id)
+		check(Items.Materials[id] ~= nil, "crop harvest material exists " .. id)
+	end
+end
+for _, id in ipairs(Property.Crops.Order) do
+	check(Property.Crops[id] ~= nil, "crop order " .. id)
+end
+for _, id in ipairs(Property.Animals.Order) do
+	check(Items.Materials[Property.Animals[id].Produces] ~= nil, "animal product exists " .. id)
+end
+for _, id in ipairs(Property.Homes.Order) do
+	for _, station in ipairs(Property.Homes[id].Stations) do
+		check(Crafting.StationNames[station] ~= nil, "home station " .. id)
+	end
+end
+for i, a in ipairs(Property.Plots) do
+	for j, b in ipairs(Property.Plots) do
+		if i < j then
+			check((a - b).Magnitude >= Property.PlotSize, "plots don't overlap " .. i .. "," .. j)
+		end
+	end
+end
+
+local EVENTS = {
+	Gather = 1,
+	Brew = 1,
+	Cook = 1,
+	Craft = 1,
+	Smelt = 1,
+	Temper = 1,
+	Infuse = 1,
+	Harvest = 1,
+	Discover = 1,
+	BuyHome = 1,
+	BuyAnimal = 1,
+	BuyHorse = 1,
+	Vote = 1,
+}
+for id, q in pairs(Quests) do
+	if type(q) == "table" and id ~= "Order" then
+		for _, o in ipairs(q.Objectives) do
+			if o.Kind == "Event" then
+				check(EVENTS[o.Target] ~= nil, "quest event valid " .. id .. " " .. o.Target)
+			end
+		end
+		for m in pairs((q.Rewards or {}).Materials or {}) do
+			materialExists(m, "quest reward " .. id)
+		end
+	end
+end
+for questId, echoId in pairs(Story.QuestEchoes) do
+	check(Quests[questId] ~= nil, "echo quest exists " .. questId)
+	check(Story.Cutscenes[echoId] ~= nil, "echo cutscene exists " .. echoId)
+end
+for id, cutscene in pairs(Story.Cutscenes) do
+	for i, shot in ipairs(cutscene.Shots) do
+		check(shot.Black or (shot.From and shot.To), "shot has camera " .. id .. "#" .. i)
+		check(type(shot.Duration) == "number", "shot duration " .. id .. "#" .. i)
+	end
+end
+for _, raceId in ipairs(Races.Order) do
+	local race = Races.Races[raceId]
+	check(race ~= nil and #race.SkinTones > 0, "race " .. raceId)
+	local st = Stats.Compute({ Level = 1, Skills = {}, EquippedWeapon = "IronSword", Appearance = { Race = raceId } })
+	for stat in pairs(race.Bonus) do
+		check(type(st[stat]) == "number", "race bonus stat " .. raceId .. " " .. stat)
+	end
+end
+check(
+	Races.Hair.Styles[Races.Default.Hair] ~= nil and Races.Races[Races.Default.Race] ~= nil,
+	"default appearance valid"
+)
+for _, list in ipairs({ Products.DevProducts, Products.GamePasses }) do
+	for _, p in ipairs(list) do
+		check(p.Grant.Horse == nil or Property.Horses[p.Grant.Horse] ~= nil, "product horse exists " .. p.Key)
+	end
+end
+for _, d in ipairs(Gov.Decrees.Order) do
+	check(Gov.Decrees[d] ~= nil, "decree " .. d)
+end
+for npcId in pairs(World.NPCs) do
+	check(World.NPCs[npcId].Name ~= nil, "npc named " .. npcId)
+end
+-- Buffs feed stats and expire
+local buffed = {
+	Level = 1,
+	Skills = {},
+	EquippedWeapon = "IronSword",
+	Buffs = { Vigor = { Until = workspace:GetServerTimeNow() + 60, Magnitude = 25 } },
+}
+local base = Stats.Compute({ Level = 1, Skills = {}, EquippedWeapon = "IronSword" }).MaxHealth
+check(Stats.Compute(buffed).MaxHealth == base + 25, "vigor buff adds health")
+check(Stats.Compute(buffed, workspace:GetServerTimeNow() + 61).MaxHealth == base, "buff expires")
+local tempered = {
+	Level = 1,
+	Skills = {},
+	EquippedWeapon = "IronSword",
+	Crafting = { Temper = { IronSword = 2 }, Infusions = { IronSword = "Vampiric" } },
+}
+local ts = Stats.Compute(tempered)
+check(math.abs(ts.WeaponDamage - 12 * 1.16) < 0.01, "temper adds damage")
+check(math.abs(ts.Lifesteal - 0.05) < 1e-6, "vampiric infusion lifesteal")
 
 print("Sample bounties:")
 for _, level in ipairs({ 1, 4, 8, 15 }) do

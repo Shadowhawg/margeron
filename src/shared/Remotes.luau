@@ -6,12 +6,14 @@
 --   Dialogue    S->C  open an NPC conversation
 --   Effect      S->C  visual effect for clients to render
 --   Attack      C->S  basic attack (aim direction)
+--   Cutscene    S->C  play a cutscene from Config/Story
+--   Open        S->C  open a window (crafting station, seed picker, government...)
 -- RemoteFunctions
 --   Request     C->S  every UI action: Request:InvokeServer(action, ...) -> result table
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local EVENTS = { "State", "Notify", "Dialogue", "Effect", "Attack" }
+local EVENTS = { "State", "Notify", "Dialogue", "Effect", "Attack", "Cutscene", "Open" }
 local FUNCTIONS = { "Request" }
 
 local Remotes = {}

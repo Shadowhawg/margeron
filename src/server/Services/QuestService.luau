@@ -8,6 +8,8 @@ local Items = require(Shared.Config.Items)
 local Enemies = require(Shared.Config.Enemies)
 local GameConfig = require(Shared.Config.GameConfig)
 local QuestRules = require(Shared.QuestRules)
+local Story = require(Shared.Config.Story)
+local Remotes = require(Shared.Remotes)
 
 local QuestService = {}
 local Services
@@ -37,7 +39,8 @@ end
 -- Quests with no giver start on their own once their requirements are met (e.g. the opening quest).
 function QuestService.GrantAutomaticQuests(player)
 	local data = Services.PlayerService.GetData(player)
-	if not data then
+	-- The story starts once the player has finished the opening cutscene and character creation.
+	if not data or not data.Story.PrologueSeen then
 		return
 	end
 	for _, questId in ipairs(Quests.Order) do
@@ -119,6 +122,37 @@ function QuestService.OnEnemyKilled(player, enemyId)
 	end
 end
 
+-- Generic progress for "Event" objectives (Brew, Harvest, Discover, Vote...).
+function QuestService.OnEvent(player, eventName, amount)
+	local data = Services.PlayerService.GetData(player)
+	if not data then
+		return
+	end
+	local changed = false
+	for key, active in pairs(data.Quests.Active) do
+		local def = QuestRules.GetDef(data, key)
+		if def then
+			for i, objective in ipairs(def.Objectives) do
+				if
+					objective.Kind == "Event"
+					and objective.Target == eventName
+					and active.Progress[i] < objective.Count
+				then
+					active.Progress[i] = math.min(objective.Count, active.Progress[i] + (amount or 1))
+					changed = true
+					notify(player, objective.Text .. " " .. active.Progress[i] .. "/" .. objective.Count, "Progress")
+					if active.Progress[i] >= objective.Count then
+						checkReady(player, data, key, def)
+					end
+				end
+			end
+		end
+	end
+	if changed then
+		Services.PlayerService.Changed(player)
+	end
+end
+
 function QuestService.OnMaterialsChanged(player, materialId)
 	local data = Services.PlayerService.GetData(player)
 	if not data then
@@ -182,7 +216,10 @@ function QuestService.TurnIn(player, key)
 		data.Quests.Completed[key] = true
 	end
 
-	local rewards = def.Rewards or {}
+	local rewards = table.clone(def.Rewards or {})
+	if bounty and rewards.Gold and Services.GovernmentService.DecreeActive("BountyEdict") then
+		rewards.Gold = math.floor(rewards.Gold * 1.25)
+	end
 	local parts = {}
 	if rewards.XP then
 		table.insert(parts, rewards.XP .. " XP")
@@ -200,6 +237,20 @@ function QuestService.TurnIn(player, key)
 	end
 	if rewards.Cosmetic then
 		Services.InventoryService.GrantCosmetic(player, rewards.Cosmetic)
+	end
+	for materialId, count in pairs(rewards.Materials or {}) do
+		Services.InventoryService.AddMaterial(player, materialId, count)
+	end
+
+	-- Main quests can unlock a memory cutscene.
+	local echo = Story.QuestEchoes[key]
+	if echo and not data.Story.Echoes[echo] then
+		data.Story.Echoes[echo] = true
+		task.delay(3, function()
+			if player.Parent then
+				Remotes.Cutscene:FireClient(player, echo)
+			end
+		end)
 	end
 	if rewards.XP then
 		Services.PlayerService.AddXP(player, rewards.XP)

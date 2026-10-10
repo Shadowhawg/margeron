@@ -19,6 +19,7 @@ local WorldMarkers = {}
 local npcIndicators = {} -- [npcId] = BillboardGui
 local waypointPart, waypointLabel
 local currentZone = nil
+local eventTarget -- defined below
 
 local function markerPosition(name)
 	local map = workspace:FindFirstChild("Map")
@@ -58,6 +59,61 @@ local function zoneForTarget(objective)
 	return nil
 end
 
+local function stationPosition(stationId)
+	for _, s in ipairs(World.Stations) do
+		if s.Station == stationId then
+			return s.Position
+		end
+	end
+	return World.Town.Position
+end
+
+local EVENT_NPCS = {
+	BuyHome = "LandSteward",
+	BuyAnimal = "Stablemaster",
+	BuyHorse = "Stablemaster",
+	Vote = "Herald",
+}
+local EVENT_STATIONS = {
+	Brew = { "AlchemyTable", "Alchemy Table" },
+	Cook = { "CookingPot", "Cooking Pot" },
+	Craft = { "Forge", "Forge" },
+	Smelt = { "Forge", "Forge" },
+	Temper = { "Forge", "Forge" },
+	Infuse = { "Forge", "Forge" },
+}
+
+-- Where to go for "Event" objectives. Returns { Position, Label, Radius } or nil.
+eventTarget = function(data, eventName)
+	local npcId = EVENT_NPCS[eventName]
+	if npcId then
+		return { Position = npcPosition(npcId), Label = World.NPCs[npcId].Name, Radius = 12 }
+	end
+	local station = EVENT_STATIONS[eventName]
+	if station then
+		return { Position = stationPosition(station[1]), Label = station[2], Radius = 10 }
+	end
+	if eventName == "Harvest" then
+		return { Position = World.Farmlands.Position, Label = "Your fields", Radius = World.Farmlands.Radius * 0.6 }
+	end
+	if eventName == "Discover" then
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+		local best, bestDist = nil, math.huge
+		for _, landmark in ipairs(World.Landmarks) do
+			if not data.Discoveries[landmark.Id] and root then
+				local d = Util.FlatDistance(root.Position, landmark.Position)
+				if d < bestDist then
+					best, bestDist = landmark, d
+				end
+			end
+		end
+		if best then
+			return { Position = best.Position, Label = "Unexplored landmark", Radius = 40 }
+		end
+	end
+	return nil
+end
+
 -- Where should the waypoint point? Returns position, label, arriveRadius
 local function waypointTarget(data)
 	local key = data.TrackedQuest
@@ -75,6 +131,12 @@ local function waypointTarget(data)
 		if QuestRules.GetProgress(data, key, i) < objective.Count then
 			if objective.Kind == "Talk" then
 				return npcPosition(objective.Target), World.NPCs[objective.Target].Name, 12
+			elseif objective.Kind == "Event" then
+				local target = eventTarget(data, objective.Target)
+				if target then
+					return target.Position, target.Label, target.Radius
+				end
+				return nil
 			end
 			local zoneId = zoneForTarget(objective)
 			if zoneId then
@@ -182,6 +244,9 @@ local function zoneAt(position)
 	end
 	if Util.FlatDistance(position, World.Town.Position) <= World.Town.Radius then
 		return "Town", World.Town.Name, "Safe haven"
+	end
+	if Util.FlatDistance(position, World.Farmlands.Position) <= World.Farmlands.Radius * 0.75 then
+		return "Farmlands", World.Farmlands.Name, "Farmland and homesteads"
 	end
 	return "Wilds", nil, nil
 end
