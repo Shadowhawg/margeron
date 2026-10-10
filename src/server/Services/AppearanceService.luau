@@ -269,6 +269,95 @@ function beardBuilders.Braided(head, folder, s, color)
 	)
 end
 
+-- Clothes over the R15 body: sleeves, a belted tunic with a hem, collar and lacing, and boots.
+-- The body colours (tunic torso, trouser legs) come from the HumanoidDescription; these parts add
+-- the shape so the character reads as dressed rather than as coloured blocks.
+local LEATHER = Color3.fromRGB(70, 48, 32)
+local function attachClothes(character, folder, appearance)
+	local outfit = Races.Outfits[appearance.Outfit] or Races.Outfits[1]
+	local tunic, trousers = outfit.Tunic, outfit.Trousers
+	local trim = tunic:Lerp(Color3.new(0, 0, 0), 0.4)
+	local FABRIC = Enum.Material.Fabric
+	local function on(partName, name, grow, scaleY, offsetY, color, material)
+		local base = character:FindFirstChild(partName)
+		if not base or not base:IsA("BasePart") then
+			return nil
+		end
+		local size = base.Size
+		return attachTo(
+			base,
+			folder,
+			name,
+			Vector3.new(size.X + grow, size.Y * scaleY + (scaleY >= 1 and grow or 0), size.Z + grow),
+			CFrame.new(0, size.Y * offsetY, 0),
+			color,
+			material or FABRIC
+		)
+	end
+	for _, side in ipairs({ "Left", "Right" }) do
+		on(side .. "UpperArm", "Sleeve", 0.08, 1, 0, tunic)
+		on(side .. "LowerArm", "Sleeve", 0.06, 0.55, 0.22, tunic)
+		on(side .. "LowerArm", "Cuff", 0.1, 0.12, -0.06, trim)
+		on(side .. "LowerLeg", "Boot", 0.1, 0.8, -0.1, LEATHER, Enum.Material.Leather)
+		on(side .. "Foot", "Boot", 0.12, 1.1, 0.05, LEATHER, Enum.Material.Leather)
+		on(side .. "UpperLeg", "Trousers", 0.04, 1, 0, trousers)
+	end
+	local upper = character:FindFirstChild("UpperTorso")
+	if upper then
+		local s = upper.Size
+		attachTo(
+			upper,
+			folder,
+			"Collar",
+			Vector3.new(s.X * 0.5, 0.16, s.Z + 0.1),
+			CFrame.new(0, s.Y / 2 - 0.05, 0),
+			trim,
+			FABRIC
+		)
+		attachTo(
+			upper,
+			folder,
+			"Lacing",
+			Vector3.new(0.16, s.Y * 0.45, 0.05),
+			CFrame.new(0, s.Y * 0.2, -s.Z / 2 - 0.03),
+			trim,
+			FABRIC
+		)
+	end
+	local lower = character:FindFirstChild("LowerTorso")
+	if lower then
+		local s = lower.Size
+		local hem = appearance.Gender == "Female" and 1.5 or 0.9
+		attachTo(
+			lower,
+			folder,
+			"Belt",
+			Vector3.new(s.X + 0.14, 0.3, s.Z + 0.14),
+			CFrame.new(0, s.Y / 2 - 0.1, 0),
+			LEATHER,
+			Enum.Material.Leather
+		)
+		attachTo(
+			lower,
+			folder,
+			"Buckle",
+			Vector3.new(0.34, 0.26, 0.06),
+			CFrame.new(0, s.Y / 2 - 0.1, -s.Z / 2 - 0.09),
+			Color3.fromRGB(200, 170, 90),
+			Enum.Material.Metal
+		)
+		attachTo(
+			lower,
+			folder,
+			"Hem",
+			Vector3.new(s.X + 0.18, hem, s.Z + 0.22),
+			CFrame.new(0, -s.Y / 2 - hem / 2 + 0.15, 0),
+			tunic,
+			FABRIC
+		)
+	end
+end
+
 local function attachFeatures(character, folder, appearance)
 	local head = character:FindFirstChild("Head")
 	if not head then
@@ -334,19 +423,28 @@ local function attachFeatures(character, folder, appearance)
 	end
 end
 
-local function attachWeapon(character, folder, weaponDef, infusionId)
-	local hand = character:FindFirstChild("RightHand")
-	local gripOffset
-	if hand then
-		gripOffset = CFrame.new(0, -0.15, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-	else
-		hand = character:FindFirstChild("Right Arm")
-		gripOffset = CFrame.new(0, -1, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-	end
-	if not hand then
-		return
-	end
+local WEAPON_TOOL = "MargeronWeapon"
+local SHEATH = "MargeronSheath"
+-- Sheathed: slung across the back, hilt over the right shoulder.
+local BACK_OFFSET = CFrame.new(0.55, 1, 0.62) * CFrame.Angles(0, 0, math.rad(145))
 
+local function removeWeapon(player, character)
+	for _, container in ipairs({ character, player:FindFirstChild("Backpack") }) do
+		local old = container and container:FindFirstChild(WEAPON_TOOL)
+		if old then
+			old:Destroy()
+		end
+	end
+	local sheath = character:FindFirstChild(SHEATH)
+	if sheath then
+		sheath:Destroy()
+	end
+end
+
+-- Drawn: a real Tool in the hand, so the character's own Animate script holds it up and plays
+-- the built-in slash animation (which every player sees). Sheathed: welded across the back.
+local function attachWeapon(player, character, weaponDef, infusionId)
+	removeWeapon(player, character)
 	local infusion = infusionId and Crafting.Infusions[infusionId]
 	local def = weaponDef
 	if infusion and not weaponDef.Glow then
@@ -354,10 +452,59 @@ local function attachWeapon(character, folder, weaponDef, infusionId)
 		def.Glow = infusion.Color
 	end
 	local model, handle = ModelBuilder.Weapon(def)
-	model:PivotTo(hand.CFrame * gripOffset)
-	local grip = ModelBuilder.Weld(hand, handle, gripOffset)
-	grip.Name = "WeaponGrip"
-	model.Parent = folder
+
+	if character:GetAttribute("WeaponDrawn") == true then
+		local tool = Instance.new("Tool")
+		tool.Name = WEAPON_TOOL
+		tool.ToolTip = def.Name
+		tool.CanBeDropped = false
+		tool.RequiresHandle = true
+		tool.ManualActivationOnly = true
+		tool.Grip = CFrame.new() -- the hand's grip attachment already points the blade forward
+		-- Welds live inside each part (Part1), so moving the parts keeps them attached to the handle.
+		for _, child in ipairs(model:GetChildren()) do
+			child.Parent = tool
+		end
+		model:Destroy()
+		tool.Parent = character
+		return
+	end
+
+	local torso = character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
+	if not torso then
+		model:Destroy()
+		return
+	end
+	model.Name = SHEATH
+	model:PivotTo(torso.CFrame * BACK_OFFSET)
+	ModelBuilder.Weld(torso, handle, BACK_OFFSET)
+	model.Parent = character
+end
+
+-- Draw or sheathe the equipped weapon. Returns the new state.
+function AppearanceService.SetWeaponDrawn(player, drawn)
+	local character = player.Character
+	local data = Services.PlayerService.GetData(player)
+	if not character or not data then
+		return false
+	end
+	if (character:GetAttribute("WeaponDrawn") == true) == drawn then
+		return drawn
+	end
+	character:SetAttribute("WeaponDrawn", drawn)
+	local weaponDef = Items.Weapons[data.EquippedWeapon] or Items.Weapons.IronSword
+	attachWeapon(player, character, weaponDef, data.Crafting.Infusions[data.EquippedWeapon])
+	return drawn
+end
+
+function AppearanceService.IsWeaponDrawn(player)
+	local character = player.Character
+	return character ~= nil and character:FindFirstChild(WEAPON_TOOL) ~= nil
+end
+
+function AppearanceService.WeaponTool(player)
+	local character = player.Character
+	return character and character:FindFirstChild(WEAPON_TOOL)
 end
 
 local function attachCape(character, folder, cosmetic)
@@ -439,9 +586,10 @@ function AppearanceService.Apply(player)
 	folder.Name = GEAR_FOLDER
 
 	attachFeatures(character, folder, data.Appearance)
+	attachClothes(character, folder, data.Appearance)
 
 	local weaponDef = Items.Weapons[data.EquippedWeapon] or Items.Weapons.IronSword
-	attachWeapon(character, folder, weaponDef, data.Crafting.Infusions[data.EquippedWeapon])
+	attachWeapon(player, character, weaponDef, data.Crafting.Infusions[data.EquippedWeapon])
 
 	local cape = Items.Cosmetics[data.Equipped.Cape]
 	if cape and data.Cosmetics[data.Equipped.Cape] then

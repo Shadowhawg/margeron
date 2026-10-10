@@ -390,7 +390,14 @@ local function buildTown()
 	end
 
 	-- Spots houses must keep clear of: NPCs, stations, the inn, the hall and market stalls.
-	local reserved = { Vector3.new(-52, 0, 48), Vector3.new(49, 0, 48), Vector3.new(58, 0, 48), Vector3.new(67, 0, 48) }
+	-- Inn, market stalls and the hall sit between the gate roads (the roads to Redfang Camp and
+	-- Greyspire leave at about 141 and 225 degrees, the Stones of Ael road at about 37).
+	local INN_POS = Vector3.new(-77, 0, 0)
+	local STALL_POS = {}
+	for _, deg in ipairs({ 52, 61, 70 }) do
+		table.insert(STALL_POS, Vector3.new(math.cos(math.rad(deg)) * 44, 0, math.sin(math.rad(deg)) * 44))
+	end
+	local reserved = { INN_POS, STALL_POS[1], STALL_POS[2], STALL_POS[3] }
 	for _, npc in pairs(World.NPCs) do
 		if Util.FlatDistance(npc.Position, center) < town.Radius then
 			table.insert(reserved, npc.Position)
@@ -401,7 +408,7 @@ local function buildTown()
 	end
 
 	-- Two rings of timber-framed houses facing the streets.
-	local hallPos = Vector3.new(-66, 0, -66)
+	local hallPos = Vector3.new(math.cos(math.rad(-105)) * 90, 0, math.sin(math.rad(-105)) * 90)
 	local hallAngle = math.atan2(hallPos.Z, hallPos.X)
 	local walls = { rgb(232, 220, 195), rgb(220, 200, 165), rgb(236, 228, 210), rgb(210, 190, 160), rgb(225, 205, 185) }
 	local roofs = { rgb(110, 55, 45), rgb(85, 70, 65), rgb(120, 75, 50), rgb(70, 75, 85) }
@@ -528,10 +535,15 @@ local function buildTown()
 	end
 	local stallColors = { rgb(170, 50, 50), rgb(60, 110, 170), rgb(200, 160, 60) }
 	for i = 1, 3 do
-		Architecture.MarketStall(WorldService.Ground(40 + i * 9, 48), Vector3.new(0, 0, -1), stallColors[i])
+		local p = STALL_POS[i]
+		Architecture.MarketStall(
+			WorldService.Ground(p.X, p.Z),
+			((center - p) * Vector3.new(1, 0, 1)).Unit,
+			stallColors[i]
+		)
 	end
-	local innGround = WorldService.Ground(-52, 48)
-	local innFacing = ((Vector3.new(0, 0, 0) - Vector3.new(-52, 0, 48)) * Vector3.new(1, 0, 1)).Unit
+	local innGround = WorldService.Ground(INN_POS.X, INN_POS.Z)
+	local innFacing = ((center - INN_POS) * Vector3.new(1, 0, 1)).Unit
 	local innCf = Architecture.House(innGround, innFacing, {
 		Width = 22,
 		Depth = 18,
@@ -657,7 +669,7 @@ local zoneBuilders = {}
 function zoneBuilders.Forest(_, center, zone)
 	scatter(center, zone.Radius * 1.4, 240, function(g)
 		if rng:NextNumber() < 0.85 then
-			Props.Tree(g, rng:NextNumber(1, 1.7), rgb(45, 95, 50))
+			Props.Tree(g, rng:NextNumber(0.9, 2.2), rgb(45, 95, 50))
 		else
 			Props.Bush(g)
 		end
@@ -935,7 +947,11 @@ local function biomeAt(x, z, h)
 		return "Volcano"
 	end
 	local frost = World.Zones.FrostHollow
-	if (x < -600 and z < -550) or flatDist(p, frost.Position) < frost.Radius * 2 or h > 160 then
+	if
+		(x < -600 * World.Scale and z < -550 * World.Scale)
+		or flatDist(p, frost.Position) < frost.Radius * 2
+		or h > 160
+	then
 		return "Snow"
 	end
 	if flatDist(p, World.Zones.Mirelake.Position) < World.Zones.Mirelake.Radius * 1.6 then
@@ -957,7 +973,31 @@ local function buildScenery()
 	local flowerColors =
 		{ rgb(240, 220, 80), rgb(230, 120, 180), rgb(250, 250, 250), rgb(150, 120, 230), rgb(240, 120, 60) }
 	local lastYield = os.clock()
-	for _ = 1, 3600 do
+	-- A mixed stand of trees: one old giant, then smaller ones around it at varied heights.
+	local function grove(cx, cz, count, radius, leaf)
+		for i = 1, count do
+			local a, r = rng:NextNumber(0, math.pi * 2), (i == 1 and 0 or rng:NextNumber(5, radius))
+			local x, z = cx + math.cos(a) * r, cz + math.sin(a) * r
+			local h = TerrainGen.HeightAt(x, z)
+			if h > 1.5 and roadDistance(x, z) > 8 then
+				local ground = Vector3.new(x, h - 0.3, z)
+				local kind = rng:NextNumber()
+				if i == 1 then
+					Props.Tree(ground, rng:NextNumber(1.8, 2.3), leaf)
+				elseif h > 70 and kind < 0.6 then
+					Props.Pine(ground, rng:NextNumber(1, 2.2), false)
+				elseif kind < 0.3 then
+					Props.Birch(ground, rng:NextNumber(0.8, 1.5))
+				else
+					Props.Tree(ground, rng:NextNumber(0.7, 1.7), leaf)
+				end
+			end
+		end
+	end
+
+	-- Same density as before, over the larger valley.
+	local tries = math.floor(3600 * (World.MapHalfSize / 1800) ^ 2)
+	for _ = 1, tries do
 		local x, z = rng:NextNumber(-half, half), rng:NextNumber(-half, half)
 		local h = TerrainGen.HeightAt(x, z)
 		local clear = h > 1.5
@@ -982,7 +1022,7 @@ local function buildScenery()
 				end
 			elseif biome == "Snow" then
 				if roll < 0.45 and slope < 6 then
-					Props.Pine(ground, rng:NextNumber(0.9, 1.5), true)
+					Props.Pine(ground, rng:NextNumber(0.9, 2.2), true)
 				elseif roll < 0.55 then
 					Props.Rock(
 						ground,
@@ -995,23 +1035,34 @@ local function buildScenery()
 					Props.DeadTree(ground, rng:NextNumber(0.8, 1.2))
 				end
 			elseif biome == "Forest" then
-				if slope < 6 and roll < 0.75 then
+				if slope < 6 and roll < 0.08 then
+					grove(x, z, rng:NextInteger(4, 8), 22, rgb(55, 105, 55))
+				elseif slope < 6 and roll < 0.5 then
 					if h > 70 then
-						Props.Pine(ground, rng:NextNumber(0.9, 1.4), false)
+						Props.Pine(ground, rng:NextNumber(1, 2.4), false)
+					elseif roll < 0.2 then
+						Props.Birch(ground, rng:NextNumber(0.9, 1.6))
 					else
-						Props.Tree(ground, rng:NextNumber(0.9, 1.6), rgb(55, 105, 55))
+						Props.Tree(ground, rng:NextNumber(0.9, 2.1), rgb(55, 105, 55))
 					end
-				elseif roll < 0.85 then
+				elseif roll < 0.8 then
 					Props.Bush(ground)
 				end
 			else -- Meadow
-				if roll < 0.12 and slope < 6 then
-					Props.Tree(ground, rng:NextNumber(0.8, 1.4), rgb(70, 120, 60))
+				if roll < 0.03 and slope < 6 then
+					-- Copses dotted across the fields give the open ground some height and shape.
+					grove(x, z, rng:NextInteger(3, 7), 18, rgb(70, 120, 60))
+				elseif roll < 0.1 and slope < 6 then
+					-- A lone field tree: anything from a sapling to a great spreading oak.
+					local big = rng:NextNumber() < 0.3
+					Props.Tree(ground, big and rng:NextNumber(1.7, 2.3) or rng:NextNumber(0.7, 1.4), rgb(70, 120, 60))
+				elseif roll < 0.13 and slope < 6 then
+					Props.Birch(ground, rng:NextNumber(0.8, 1.5))
 				elseif roll < 0.2 then
 					Props.Rock(ground, Vector3.new(rng:NextNumber(3, 8), rng:NextNumber(2, 5), rng:NextNumber(3, 8)))
 				elseif roll < 0.3 then
 					Props.Bush(ground, rgb(70, 115, 55))
-				elseif roll < 0.42 then
+				elseif roll < 0.36 then
 					Props.Flowers(ground, flowerColors[rng:NextInteger(1, #flowerColors)])
 				end
 			end
@@ -1027,7 +1078,7 @@ local function buildGatherNodes()
 	local half = World.MapHalfSize * 0.84
 	local placed = 0
 	local tries = 0
-	while placed < 320 and tries < 6000 do
+	while placed < 520 and tries < 9000 do
 		tries += 1
 		local x, z = rng:NextNumber(-half, half), rng:NextNumber(-half, half)
 		local h = TerrainGen.HeightAt(x, z)
@@ -1113,12 +1164,12 @@ local function setupLighting()
 	Lighting.EnvironmentSpecularScale = 0.2
 	Lighting.GeographicLatitude = 35
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
-	atmosphere.Density = 0.3
+	atmosphere.Density = 0.42 -- distant ranges fade into haze, so the far side of the valley stays a mystery
 	atmosphere.Offset = 0.12
 	atmosphere.Color = rgb(200, 195, 185)
 	atmosphere.Decay = rgb(110, 100, 95)
 	atmosphere.Glare = 0.1
-	atmosphere.Haze = 1.4
+	atmosphere.Haze = 2.2
 	atmosphere.Parent = Lighting
 	local bloom = Lighting:FindFirstChildOfClass("BloomEffect") or Instance.new("BloomEffect")
 	bloom.Intensity = 0.25

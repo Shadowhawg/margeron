@@ -790,6 +790,7 @@ function PropertyService.Mount(player)
 		return result(false, "You can't mount up in combat.")
 	end
 	local root = character:FindFirstChild("HumanoidRootPart")
+	Services.AppearanceService.SetWeaponDrawn(player, false)
 	local horse = buildHorse(def)
 	local lift = 2.6
 	character:SetAttribute("BaseHipHeight", humanoid.HipHeight)

@@ -28,25 +28,87 @@ end
 local WOOD = rgb(95, 68, 45)
 local STONE = rgb(120, 120, 125)
 
+-- Broadleaf (oak-like): a tapering, slightly leaning trunk, a few limbs and a wide, lumpy crown.
+-- scale ~0.7 (sapling, ~9 studs) to ~2.3 (old giant, ~35 studs).
 function Props.Tree(ground, scale, leafColor)
-	local h = 10 * scale
+	local h = 13 * scale
+	local lean = CFrame.Angles(rng:NextNumber(-0.06, 0.06), rng:NextNumber(0, math.pi * 2), rng:NextNumber(-0.06, 0.06))
+	local base = CFrame.new(ground) * lean
 	part({
 		Name = "Trunk",
 		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(h, 1.6 * scale, 1.6 * scale),
-		CFrame = CFrame.new(ground + Vector3.new(0, h / 2 - 0.5, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		Size = Vector3.new(h + 1, 1.6 * scale, 1.6 * scale),
+		CFrame = base * CFrame.new(0, h / 2 - 0.5, 0) * CFrame.Angles(0, 0, math.rad(90)),
 		Color = WOOD,
 		Material = Enum.Material.Wood,
 	})
-	for i = 1, 3 do
-		local size = (8.5 - i * 1.7) * scale
+	local top = base * CFrame.new(0, h * 0.85, 0)
+	-- Big trees spread limbs with their own leaf clumps; small ones are just a crown.
+	local limbs = scale > 1.6 and 3 or (scale > 1.15 and 2 or 0)
+	local leafBase = leafColor:Lerp(rgb(30, 50, 25), rng:NextNumber(0, 0.2))
+	for i = 1, limbs do
+		local yaw = i / limbs * math.pi * 2 + rng:NextNumber(-0.4, 0.4)
+		local limbLen = 4.5 * scale
+		local limb = base
+			* CFrame.new(0, h * rng:NextNumber(0.55, 0.7), 0)
+			* CFrame.Angles(0, yaw, 0)
+			* CFrame.Angles(0, 0, math.rad(-50))
+		part({
+			Name = "Limb",
+			Size = Vector3.new(0.7 * scale, limbLen, 0.7 * scale),
+			CFrame = limb * CFrame.new(0, limbLen / 2, 0),
+			Color = WOOD,
+			Material = Enum.Material.Wood,
+			CanCollide = false,
+		})
+		local tip = (limb * CFrame.new(0, limbLen, 0)).Position
+		local size = rng:NextNumber(5, 7) * scale
 		part({
 			Name = "Leaves",
 			Shape = Enum.PartType.Ball,
-			Size = Vector3.new(size, size, size),
-			Position = ground
-				+ Vector3.new(rng:NextNumber(-1, 1) * scale, h * 0.62 + i * 2.6 * scale, rng:NextNumber(-1, 1) * scale),
-			Color = leafColor:Lerp(rgb(30, 50, 25), rng:NextNumber(0, 0.25)),
+			Size = Vector3.new(size, size * 0.8, size),
+			Position = tip + Vector3.new(0, size * 0.15, 0),
+			Color = leafBase:Lerp(rgb(90, 140, 60), rng:NextNumber(0, 0.25)),
+			Material = Enum.Material.Grass,
+			CanCollide = false,
+			CastShadow = false,
+		})
+	end
+	local crown = rng:NextNumber(7, 9) * scale
+	part({
+		Name = "Leaves",
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.new(crown, crown * 0.85, crown),
+		Position = top.Position + Vector3.new(0, crown * 0.2, 0),
+		Color = leafBase,
+		Material = Enum.Material.Grass,
+		CanCollide = false,
+	})
+end
+
+-- Birch: tall, slender and pale, with small airy leaf clusters. scale 0.8-1.6 (~14-30 studs).
+function Props.Birch(ground, scale)
+	local h = 18 * scale
+	local lean = CFrame.Angles(rng:NextNumber(-0.08, 0.08), 0, rng:NextNumber(-0.08, 0.08))
+	local base = CFrame.new(ground) * lean
+	part({
+		Name = "Trunk",
+		Shape = Enum.PartType.Cylinder,
+		Size = Vector3.new(h, 0.9 * scale, 0.9 * scale),
+		CFrame = base * CFrame.new(0, h / 2 - 0.5, 0) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = rgb(225, 222, 210),
+		Material = Enum.Material.SmoothPlastic,
+	})
+	local leaf = rgb(150, 175, 75):Lerp(rgb(200, 180, 70), rng:NextNumber(0, 0.4))
+	for i = 1, 3 do
+		local size = (5.5 - i) * scale
+		local a = rng:NextNumber(0, math.pi * 2)
+		part({
+			Name = "Leaves",
+			Shape = Enum.PartType.Ball,
+			Size = Vector3.new(size, size * 1.3, size),
+			Position = (base * CFrame.new(math.cos(a) * scale, h * (0.62 + i * 0.12), math.sin(a) * scale)).Position,
+			Color = leaf,
 			Material = Enum.Material.Grass,
 			CanCollide = false,
 			CastShadow = i == 1,
@@ -65,7 +127,7 @@ function Props.Pine(ground, scale, snowy)
 		Material = Enum.Material.Wood,
 	})
 	for i = 1, 4 do
-		local w = (9 - i * 1.8) * scale
+		local w = (9.5 - i * 1.9) * scale
 		local tier = part({
 			Name = "Needles",
 			Size = Vector3.new(w, 2.6 * scale, w),
@@ -75,7 +137,7 @@ function Props.Pine(ground, scale, snowy)
 			Material = Enum.Material.Grass,
 			CanCollide = false,
 		})
-		if snowy then
+		if snowy and i >= 3 then
 			part({
 				Name = "Snow",
 				Size = Vector3.new(w * 0.8, 0.5 * scale, w * 0.8),
@@ -312,10 +374,11 @@ function Props.Sign(ground, text, facing)
 	local height = lines == 2 and 3.4 or 2.2
 	for side = -1, 1, 2 do
 		local offset = facing:Cross(Vector3.new(0, 1, 0)).Unit * side * (width / 2 - 0.6)
+		-- Posts run 4 studs into the ground so they still reach it where the sign stands on a slope.
 		part({
 			Name = "SignPost",
-			Size = Vector3.new(0.6, 5 + height, 0.6),
-			Position = ground + offset + Vector3.new(0, (5 + height) / 2, 0),
+			Size = Vector3.new(0.6, 9 + height, 0.6),
+			Position = ground + offset + Vector3.new(0, (5 + height) / 2 - 2, 0),
 			Color = WOOD,
 			Material = Enum.Material.Wood,
 		})
@@ -605,7 +668,7 @@ function landmarkBuilders.Wreck(ground)
 	part({
 		Name = "Hull",
 		Size = Vector3.new(12, 8, 40),
-		CFrame = CFrame.new(ground + Vector3.new(0, 2, 0)) * CFrame.Angles(0, 0.6, math.rad(25)),
+		CFrame = CFrame.new(ground + Vector3.new(0, -1.5, 0)) * CFrame.Angles(0, 0.6, math.rad(25)),
 		Color = hull,
 		Material = Enum.Material.WoodPlanks,
 	})

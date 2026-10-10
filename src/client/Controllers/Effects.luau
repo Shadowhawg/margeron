@@ -85,78 +85,12 @@ local function playSound(id, position, volume, pitch)
 end
 Effects.PlaySound = playSound
 
-local originalJoints = {}
-setmetatable(originalJoints, { __mode = "k" })
-
-local function tweenJoint(joint, poses, times)
-	local base = originalJoints[joint]
-	if not base then
-		base = joint.C0
-		originalJoints[joint] = base
-	end
-	for i, pose in ipairs(poses) do
-		local t = TweenService:Create(
-			joint,
-			TweenInfo.new(times[i], Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-			{ C0 = base * pose }
-		)
-		t:Play()
-		t.Completed:Wait()
-	end
-	TweenService:Create(joint, TweenInfo.new(0.18), { C0 = base }):Play()
-end
-
--- Swing the whole arm (shoulder joint) together with the weapon in the hand.
+-- The arm swing itself is the character's built-in slash animation (the server drops a "toolanim"
+-- value into the held weapon); here we only add the whoosh.
 local function swing(character, weaponType)
-	if not character then
-		return
-	end
-	local upperArm = character:FindFirstChild("RightUpperArm")
-	local shoulder = upperArm and upperArm:FindFirstChild("RightShoulder")
-	local isR15 = shoulder ~= nil
-	if not shoulder then
-		local torso = character:FindFirstChild("Torso")
-		shoulder = torso and torso:FindFirstChild("Right Shoulder")
-	end
-	local gear = character:FindFirstChild("MargeronGear")
-	local weapon = gear and gear:FindFirstChild("Weapon")
-	local handle = weapon and weapon:FindFirstChild("Handle")
-	local grip = handle and handle:FindFirstChild("WeaponGrip")
-	local root = character:FindFirstChild("HumanoidRootPart")
+	local root = character and character:FindFirstChild("HumanoidRootPart")
 	if root then
 		playSound(weaponType == "Staff" and SOUNDS.Equip or SOUNDS.Swing, root.Position, 0.45)
-	end
-
-	local function axis(deg)
-		-- R15 shoulders raise forward around X; R6 shoulders around Z.
-		return isR15 and CFrame.Angles(math.rad(deg), 0, 0) or CFrame.Angles(0, 0, math.rad(deg))
-	end
-	if shoulder then
-		if weaponType == "Staff" then
-			task.spawn(tweenJoint, shoulder, { axis(95), axis(80) }, { 0.08, 0.12 })
-		else
-			task.spawn(
-				tweenJoint,
-				shoulder,
-				{ axis(155) * CFrame.Angles(0, math.rad(-20), 0), axis(25) * CFrame.Angles(0, math.rad(30), 0) },
-				{ 0.09, 0.11 }
-			)
-		end
-	end
-	if grip then
-		if weaponType == "Staff" then
-			tweenJoint(
-				grip,
-				{ CFrame.new(0, 0, 0.6), CFrame.new(0, 0, -1) * CFrame.Angles(math.rad(-15), 0, 0) },
-				{ 0.08, 0.12 }
-			)
-		else
-			tweenJoint(
-				grip,
-				{ CFrame.Angles(math.rad(-40), 0, math.rad(-15)), CFrame.Angles(math.rad(60), 0, math.rad(20)) },
-				{ 0.09, 0.11 }
-			)
-		end
 	end
 end
 

@@ -204,6 +204,8 @@ function Architecture.House(ground, facing, opts)
 					}, parent)
 				end
 				for i = -1, 1, 2 do
+					-- Ground-floor walls hold the door and the low windows; braces only upstairs.
+					local braced = story > 1
 					part({
 						Name = "Stud",
 						Size = Vector3.new(0.5, floorH - 0.6, 0.3),
@@ -212,15 +214,17 @@ function Architecture.House(ground, facing, opts)
 						Material = Enum.Material.Wood,
 					}, parent)
 					local braceLen = math.sqrt((sw / 4) ^ 2 + (floorH - 1) ^ 2)
-					part({
-						Name = "Brace",
-						Size = Vector3.new(0.4, braceLen, 0.28),
-						CFrame = base
-							* CFrame.new(i * sw * 3 / 8, y + floorH / 2, z + sign * 0.02)
-							* CFrame.Angles(0, 0, -i * math.atan2(sw / 4, floorH - 1)),
-						Color = TIMBER,
-						Material = Enum.Material.Wood,
-					}, parent)
+					if braced then
+						part({
+							Name = "Brace",
+							Size = Vector3.new(0.4, braceLen, 0.28),
+							CFrame = base
+								* CFrame.new(i * sw * 3 / 8, y + floorH / 2, z + sign * 0.02)
+								* CFrame.Angles(0, 0, -i * math.atan2(sw / 4, floorH - 1)),
+							Color = TIMBER,
+							Material = Enum.Material.Wood,
+						}, parent)
+					end
 				end
 			end
 		else
@@ -233,13 +237,22 @@ function Architecture.House(ground, facing, opts)
 			}, parent)
 		end
 
-		-- Windows: two on the front and back, one on each side.
+		-- Windows. Front and back: on the ground floor they sit outside the door and its lantern;
+		-- upstairs they sit in the inner bays between the studs, clear of the diagonal braces.
+		-- The plain side walls get the shuttered windows.
 		local wy = y + floorH * 0.55
-		for _, x in ipairs({ -sw / 3.2, sw / 3.2 }) do
-			if not (story == 1 and math.abs(x) < 3) then
-				window(base * CFrame.new(x, wy, -sd / 2 - 0.12), 2.6, 3, parent, shutterColor)
-				window(base * CFrame.new(x, wy, sd / 2 + 0.12) * CFrame.Angles(0, math.pi, 0), 2.6, 3, parent, nil)
+		local frontXs = {}
+		if story == 1 then
+			if sw >= 13.2 then
+				frontXs = { -(sw / 2 - 2), sw / 2 - 2 }
 			end
+		elseif sw >= 12 then
+			frontXs = { -sw / 8, sw / 8 }
+		end
+		local frontW = story == 1 and 2.2 or math.min(2.4, sw / 4 - 0.8)
+		for _, x in ipairs(frontXs) do
+			window(base * CFrame.new(x, wy, -sd / 2 - 0.12), frontW, 3, parent, nil)
+			window(base * CFrame.new(x, wy, sd / 2 + 0.12) * CFrame.Angles(0, math.pi, 0), frontW, 3, parent, nil)
 		end
 		for side = -1, 1, 2 do
 			window(
@@ -247,15 +260,15 @@ function Architecture.House(ground, facing, opts)
 				2.4,
 				3,
 				parent,
-				nil
+				sd >= 9 and shutterColor or nil
 			)
 		end
 		-- Flower boxes under front upper windows
 		if story == 2 then
-			for _, x in ipairs({ -sw / 3.2, sw / 3.2 }) do
+			for _, x in ipairs(frontXs) do
 				part({
 					Name = "FlowerBox",
-					Size = Vector3.new(3, 0.7, 0.9),
+					Size = Vector3.new(frontW + 0.4, 0.7, 0.9),
 					CFrame = base * CFrame.new(x, wy - 2.1, -sd / 2 - 0.7),
 					Color = TIMBER,
 					Material = Enum.Material.Wood,
@@ -265,7 +278,7 @@ function Architecture.House(ground, facing, opts)
 						Name = "Flower",
 						Shape = Enum.PartType.Ball,
 						Size = Vector3.new(0.6, 0.6, 0.6),
-						CFrame = base * CFrame.new(x + f * 0.9, wy - 1.55, -sd / 2 - 0.7),
+						CFrame = base * CFrame.new(x + f * frontW / 3, wy - 1.55, -sd / 2 - 0.7),
 						Color = ({ rgb(230, 70, 80), rgb(250, 220, 80), rgb(240, 240, 250) })[f + 2],
 						Material = Enum.Material.SmoothPlastic,
 						CanCollide = false,
@@ -315,7 +328,7 @@ function Architecture.House(ground, facing, opts)
 		Color = roofColor,
 		Material = Enum.Material.Slate,
 	}, parent)
-	lantern(base * CFrame.new(3.3, 1.1 + 5.5, -d / 2) * CFrame.Angles(0, math.pi, 0), parent)
+	lantern(base * CFrame.new(3.1, 1.1 + 5.5, -d / 2) * CFrame.Angles(0, math.pi, 0), parent)
 
 	-- Gabled roof: ridge along the width, sloping to front and back, with triangle gable ends.
 	local roofH = topDepth * 0.42
@@ -681,14 +694,16 @@ function Architecture.CurtainWall(center, radius, height, groundAt, opts)
 	local gates = opts.Gates or {}
 	local gateWidth = opts.GateWidth or 14
 	local gateHalfAngle = (gateWidth / 2 + 7) / radius
-	local function nearGate(a)
+	local function nearGate(a, extra)
 		for _, g in ipairs(gates) do
-			if math.abs((a - g + math.pi) % (2 * math.pi) - math.pi) < gateHalfAngle then
+			if math.abs((a - g + math.pi) % (2 * math.pi) - math.pi) < gateHalfAngle + (extra or 0) then
 				return g
 			end
 		end
 		return nil
 	end
+	-- Wall towers keep clear of the gatehouse's own towers.
+	local towerClearance = ((opts.TowerRadius or 6) + 8) / radius
 	local function point(a)
 		return groundAt(center.X + math.cos(a) * radius, center.Z + math.sin(a) * radius)
 	end
@@ -700,7 +715,7 @@ function Architecture.CurtainWall(center, radius, height, groundAt, opts)
 			local outward = Vector3.new(math.cos(mid), 0, math.sin(mid))
 			Architecture.WallSegment(point(a0), point(a1), height, opts.Thickness or 4, outward, opts)
 		end
-		if i % (opts.TowerEvery or 6) == 0 and not nearGate(a0) then
+		if i % (opts.TowerEvery or 6) == 0 and not nearGate(a0, towerClearance) then
 			if opts.RoundTowers then
 				Architecture.RoundTower(point(a0), opts.TowerRadius or 6, height + 6, {
 					Parent = opts.Parent,
@@ -773,10 +788,12 @@ function Architecture.Street(a, b, width, groundAt, opts)
 		local g0, g1 = groundAt(p0.X, p0.Z), groundAt(p1.X, p1.Z)
 		local mid = (g0 + g1) / 2
 		local dir = (g1 - g0)
+		-- Thick enough to sit clearly on top of smoothed terrain, and long enough that neighbouring
+		-- pieces overlap at the bends instead of leaving wedge-shaped gaps.
 		part({
 			Name = "Street",
-			Size = Vector3.new(width, 0.4, dir.Magnitude + 0.4),
-			CFrame = CFrame.lookAt(mid + Vector3.new(0, 0.15, 0), mid + Vector3.new(0, 0.15, 0) + dir),
+			Size = Vector3.new(width, 0.8, dir.Magnitude + 3),
+			CFrame = CFrame.lookAt(mid + Vector3.new(0, 0.3, 0), mid + Vector3.new(0, 0.3, 0) + dir),
 			Color = opts.Color or rgb(125, 120, 112),
 			Material = opts.Material or Enum.Material.Cobblestone,
 			CastShadow = false,

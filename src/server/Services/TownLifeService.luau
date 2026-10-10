@@ -10,29 +10,13 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local World = require(Shared.Config.World)
 local Clock = require(Shared.Clock)
 local ModelBuilder = require(script.Parent.Parent.Lib.ModelBuilder)
+local Outfits = require(script.Parent.Parent.Lib.Outfits)
 
 local TownLifeService = {}
 local Services
 
 local rng = Random.new()
 
-local CLOTHES = {
-	Color3.fromRGB(120, 85, 60),
-	Color3.fromRGB(85, 100, 70),
-	Color3.fromRGB(110, 60, 55),
-	Color3.fromRGB(70, 80, 110),
-	Color3.fromRGB(140, 120, 90),
-	Color3.fromRGB(95, 75, 95),
-	Color3.fromRGB(150, 140, 120),
-	Color3.fromRGB(60, 70, 60),
-}
-local SKIN = {
-	Color3.fromRGB(234, 192, 160),
-	Color3.fromRGB(205, 160, 120),
-	Color3.fromRGB(160, 110, 80),
-	Color3.fromRGB(110, 75, 55),
-	Color3.fromRGB(245, 210, 185),
-}
 local ACTIVITIES = { "Talk", "Work", "Look", "Idle" }
 
 -- Things townsfolk say when a player passes. Kept vague so they fit any point in the story.
@@ -237,10 +221,9 @@ local function spawnCitizen(folder, graph, townName)
 	local model, info = ModelBuilder.Creature("Townsfolk", {
 		Shape = "Humanoid",
 		Scale = rng:NextNumber(0.88, 1.05),
-		Color = CLOTHES[rng:NextInteger(1, #CLOTHES)],
-		HeadColor = SKIN[rng:NextInteger(1, #SKIN)],
 		EyeColor = Color3.fromRGB(35, 28, 25),
 	})
+	ModelBuilder.Clothe(model, info, Outfits.Townsfolk(rng))
 	local nodeIndex = rng:NextInteger(1, #graph.Nodes)
 	local start = graph.Nodes[nodeIndex]
 	model:PivotTo(CFrame.new(start + Vector3.new(0, info.GroundOffset + 0.5, 0)))

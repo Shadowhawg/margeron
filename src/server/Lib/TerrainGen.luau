@@ -61,6 +61,14 @@ local function computeLandform(x, z)
 	if rangeMask > 0 then
 		h += ridged(x, z, 620, SEED + 31) * 190 * rangeMask
 	end
+	-- A broken ring of hills around Riverwatch's valley: from town you see ridgelines, not the
+	-- whole map. Passes open where the noise dips, and the roads and river cut through.
+	local dt = math.sqrt(x * x + z * z)
+	local rim = smoothstep(520, 780, dt) * (1 - smoothstep(1100, 1450, dt))
+	if rim > 0 then
+		local gaps = smoothstep(-0.25, 0.25, math.noise(x / 380, z / 380, SEED + 61))
+		h += rim * (0.35 + 0.65 * gaps) * (55 + ridged(x, z, 280, SEED + 51) * 75)
+	end
 	local edge = math.max(math.abs(x), math.abs(z)) / HALF
 	if edge > 0.78 then
 		h += ((edge - 0.78) / 0.22) ^ 1.4 * 280
@@ -319,12 +327,10 @@ function TerrainGen.Generate(positions, onProgress)
 	end
 	for _, landmark in ipairs(World.Landmarks) do
 		if landmark.Kind ~= "Shrine" or landmark.Id ~= "DrownedShrine" then
-			-- Landmarks sit where the land puts them: towers on ridges, mines in cliffs.
-			local target = math.max(
-				8,
-				landform(landmark.Position.X, landmark.Position.Z) + detail(landmark.Position.X, landmark.Position.Z)
-			)
-			addFlat(landmark.Position, 22, 40, target)
+			-- Landmarks sit where the land puts them: towers on ridges, mines in cliffs. The pad's height
+			-- is the smooth landform, the same height a road through it is graded to, so the two agree.
+			local target = math.max(8, landform(landmark.Position.X, landmark.Position.Z))
+			addFlat(landmark.Position, 30, 40, target)
 		end
 	end
 	table.insert(paint, { X = town.Position.X, Z = town.Position.Z, Radius = 60, Material = M.Cobblestone })

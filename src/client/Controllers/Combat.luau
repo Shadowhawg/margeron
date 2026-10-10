@@ -126,6 +126,11 @@ local function tryAttack()
 		return
 	end
 	lastAttack = now
+	if not root.Parent:FindFirstChild("MargeronWeapon") then
+		-- Sheathed: this click draws the weapon (the server does it); the next one swings.
+		Remotes.Attack:FireServer(root.CFrame.LookVector)
+		return
+	end
 	HUD.StartCooldown("Attack", stats.Weapon.Cooldown)
 	local weapon = stats.Weapon
 	local dir = aimDirection(root)
@@ -255,6 +260,16 @@ function Combat.Start()
 	end, true, Enum.KeyCode.C, Enum.KeyCode.ButtonL3)
 	ContextActionService:SetTitle("Crouch", "Sneak")
 	ContextActionService:SetPosition("Crouch", UDim2.new(1, -330, 1, -100))
+
+	-- Draw / sheathe your weapon (R, like Skyrim). Attacking also draws it.
+	ContextActionService:BindAction("DrawWeapon", function(_, inputState)
+		if inputState == Enum.UserInputState.Begin and not blocked() then
+			task.spawn(Net.Request, "ToggleWeapon")
+		end
+		return Enum.ContextActionResult.Sink
+	end, true, Enum.KeyCode.R, Enum.KeyCode.DPadDown)
+	ContextActionService:SetTitle("DrawWeapon", "Sheathe")
+	ContextActionService:SetPosition("DrawWeapon", UDim2.new(1, -410, 1, -100))
 
 	-- Ride / dismount your horse.
 	ContextActionService:BindAction("Mount", function(_, inputState)

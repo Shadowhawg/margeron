@@ -134,11 +134,27 @@ function CombatService.Attack(player, aim)
 	end
 	local root = character:FindFirstChild("HumanoidRootPart")
 	local weapon = stats.Weapon
-	if not root or not cooldownReady(player, "Attack", weapon.Cooldown) then
+	if not root then
+		return
+	end
+	-- Attacking with the weapon sheathed draws it first (like Skyrim); the next click swings.
+	local tool = Services.AppearanceService.WeaponTool(player)
+	if not tool then
+		Services.PropertyService.Dismount(player)
+		Services.AppearanceService.SetWeaponDrawn(player, true)
+		return
+	end
+	if not cooldownReady(player, "Attack", weapon.Cooldown) then
 		return
 	end
 	Services.PropertyService.Dismount(player)
 
+	-- The default Animate script plays its slash/lunge animation when a "toolanim" value appears
+	-- in the held tool. It runs on every client, so everyone sees the swing.
+	local anim = Instance.new("StringValue")
+	anim.Name = "toolanim"
+	anim.Value = (weapon.Type == "Dagger" or weapon.Type == "Staff") and "Lunge" or "Slash"
+	anim.Parent = tool
 	Remotes.Effect:FireAllClients("Swing", character, weapon.Type)
 
 	if weapon.Type == "Staff" then
@@ -226,6 +242,7 @@ function CombatService.UseAbility(player, abilityId, aim)
 	end
 
 	Services.PropertyService.Dismount(player)
+	Services.AppearanceService.SetWeaponDrawn(player, true)
 	handler(player, stats, root, direction, data)
 
 	if stats.Flags.ArcaneEcho and math.random() < 0.25 then

@@ -179,7 +179,9 @@ sliders (scaled within each race's range), skin tone (per-race palette), 9 hair 
 5 beards and 8 outfits. Seer Ilsa can reshape your appearance later for gold.
 
 ## World & exploration
-A 3,600 × 3,600 stud open world generated from config, with real elevation: ridged mountain ranges up
+A 5,760 × 5,760 stud open world generated from config (the wilds are laid out on a grid and stretched by
+`World.Scale`, so the valley can grow without moving the town). A broken ring of hills around Riverwatch
+hides the far side of the map from spawn, and haze swallows distant ranges. Real elevation: ridged mountain ranges up
 to ~270 studs, valleys, plateaus, a mountain border, a volcano,
 a winding river with bridges, three lakes (one with an island shrine), forests, snowfields and marsh.
 * **Regions:** Riverwatch (walled town), Greenmeadow (farmland and property plots) and 7 combat zones
@@ -250,6 +252,12 @@ Riverwatch is ruled by an elected **Lord or Lady**, shared across *every* server
 * **NPC conversations:** a cinematic over-the-shoulder shot of the NPC, who turns to face you.
 * **Adaptive music:** picks a track for town, farmland, each biome, combat, boss fights and cutscenes,
   with crossfades and ambience layers. Track IDs are set in `Config/Music`.
+* **Clothing:** everyone is dressed. Players wear sleeves, a belted tunic with a hem, and boots in their
+  chosen colours. Named NPCs have costumes that say who they are (the smith's apron, the archmage's
+  pointed hat), townsfolk are dressed at random, and bandits and cultists wear their faction's gear
+  (`server/Lib/Outfits`).
+* **Weapons:** your weapon is a real Tool in hand when drawn, using the built-in slash animation
+  every player sees, and slung across your back when sheathed (R).
 
 ## Roadmap
 

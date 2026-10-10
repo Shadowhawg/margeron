@@ -15,6 +15,7 @@ local Util = require(Shared.Util)
 local Clock = require(Shared.Clock)
 local Calendar = require(Shared.Config.Calendar)
 local ModelBuilder = require(script.Parent.Parent.Lib.ModelBuilder)
+local Outfits = require(script.Parent.Parent.Lib.Outfits)
 
 local EnemyService = {}
 local Services
@@ -106,6 +107,10 @@ function spawnEnemy(zoneId, enemyId)
 			or (isWyrm and Color3.fromRGB(255, 140, 30))
 			or (enemyId == "Skeleton" and Color3.fromRGB(120, 200, 255) or nil),
 	})
+	local outfit = Outfits.Enemy[enemyId]
+	if outfit and def.Shape == "Humanoid" then
+		ModelBuilder.Clothe(model, info, outfit)
+	end
 	-- Keep custom rigs upright and on their feet.
 	for _, state in ipairs({
 		Enum.HumanoidStateType.FallingDown,

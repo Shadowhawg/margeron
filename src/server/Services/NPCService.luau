@@ -9,6 +9,7 @@ local QuestRules = require(Shared.QuestRules)
 local Remotes = require(Shared.Remotes)
 local Util = require(Shared.Util)
 local ModelBuilder = require(script.Parent.Parent.Lib.ModelBuilder)
+local Outfits = require(script.Parent.Parent.Lib.Outfits)
 
 local NPCService = {}
 local Services
@@ -71,6 +72,7 @@ local function buildPerson(npcId, npc, folder)
 		HeadColor = Color3.fromRGB(234, 192, 160),
 		EyeColor = Color3.fromRGB(40, 30, 30),
 	})
+	ModelBuilder.Clothe(model, info, Outfits.NPC[npcId] or Outfits.Townsfolk(Random.new(#npcId)))
 	local position = Services.WorldService.GetNPCPosition(npcId)
 	local ground = Services.WorldService.GroundAt(position)
 	local facing = World.Town.Position + Vector3.new(0, 0, 15)

@@ -157,7 +157,16 @@ I.__newindex = function(self, k, v)
 			assert(v.P.X == v.P.X and v.P.Y == v.P.Y, "CFrame is NaN")
 		end
 	end
-	rawget(self, "_props")[k] = v
+	local props = rawget(self, "_props")
+	props[k] = v
+	-- Keep Position and CFrame in step, as Roblox does.
+	if PART_CLASSES[props.ClassName] and v ~= nil then
+		if k == "Position" then
+			props.CFrame = setmetatable({ P = v, R = props.CFrame and props.CFrame.R or IDENTITY }, CF)
+		elseif k == "CFrame" then
+			props.Position = v.P
+		end
+	end
 end
 function methods.IsA(self, class)
 	local c = self.ClassName
@@ -328,6 +337,60 @@ for name, graph in pairs({ Riverwatch = riverwatch, Aurelion = aurelion }) do
 	check(dry, name .. " street points are on dry land")
 	check(linked, name .. " street points are all connected")
 end
+-- No building may stand on a street: compare footprints (boxes turned about Y) of buildings and street slabs.
+local BUILDINGS = { Foundation = true, HallWalls = true, StallCounter = true, TowerBase = true, TempleHall = true }
+local streets, buildings = {}, {}
+local function collect(inst)
+	for _, c in ipairs(inst:GetChildren()) do
+		if c.ClassName == "Part" then
+			if c.Name == "Street" then
+				table.insert(streets, c)
+			elseif BUILDINGS[c.Name] then
+				table.insert(buildings, c)
+			end
+		end
+		collect(c)
+	end
+end
+collect(workspace)
+local function footprint(part, shrink)
+	local r = part.CFrame.R
+	return {
+		C = { part.CFrame.P.X, part.CFrame.P.Z },
+		U = { r[1], r[7] },
+		V = { r[3], r[9] },
+		H = { part.Size.X / 2 - shrink, part.Size.Z / 2 - shrink },
+	}
+end
+local function overlaps(a, b)
+	local d = { b.C[1] - a.C[1], b.C[2] - a.C[2] }
+	for _, axis in ipairs({ a.U, a.V, b.U, b.V }) do
+		local function radius(f)
+			return math.abs(axis[1] * f.U[1] + axis[2] * f.U[2]) * f.H[1]
+				+ math.abs(axis[1] * f.V[1] + axis[2] * f.V[2]) * f.H[2]
+		end
+		if math.abs(d[1] * axis[1] + d[2] * axis[2]) > radius(a) + radius(b) then
+			return false
+		end
+	end
+	return true
+end
+local blocked = {}
+for _, b in ipairs(buildings) do
+	local fb = footprint(b, 0.5)
+	for _, st in ipairs(streets) do
+		local dx, dz = b.CFrame.P.X - st.CFrame.P.X, b.CFrame.P.Z - st.CFrame.P.Z
+		if
+			dx * dx + dz * dz < 60 * 60
+			and math.abs(b.CFrame.P.Y - st.CFrame.P.Y) < 10
+			and overlaps(fb, footprint(st, 0.5))
+		then
+			table.insert(blocked, string.format("%s at (%.0f, %.0f)", b.Name, b.CFrame.P.X, b.CFrame.P.Z))
+			break
+		end
+	end
+end
+check(#blocked == 0, "no building stands on a street: " .. table.concat(blocked, ", "))
 check(total < 40000, "part count is reasonable (" .. total .. ")")
 check((tags.CraftingStation or 0) >= 7, "town and city stations built")
 check((tags.RestSpot or 0) >= 2, "inn beds built")

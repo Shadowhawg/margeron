@@ -11,6 +11,12 @@
 -- "{name}" in any line is replaced with the player's name, "{race}" with their race.
 local VOICE = "The Voice"
 
+-- Places out in the wilds are spread out by World.Scale (see Config/World); the height stays as is.
+local SCALE = require(script.Parent.World).Scale
+local function far(x, height, z)
+	return Vector3.new(x * SCALE, height, z * SCALE)
+end
+
 local Story = {}
 
 Story.Cutscenes = {
@@ -41,8 +47,8 @@ Story.Cutscenes = {
 				},
 			},
 			{
-				From = { Pos = Vector3.new(300, 90, -300), Look = Vector3.new(1180, 20, -1180) },
-				To = { Pos = Vector3.new(420, 110, -420), Look = Vector3.new(1180, 40, -1180) },
+				From = { Pos = far(300, 90, -300), Look = far(1180, 20, -1180) },
+				To = { Pos = far(420, 110, -420), Look = far(1180, 40, -1180) },
 				Duration = 9,
 				Lines = {
 					{ Speaker = VOICE, Text = "Look east. Do you see the glow on the peak? That's not the sunrise." },
@@ -126,8 +132,8 @@ Story.Cutscenes = {
 		Music = "Echo",
 		Shots = {
 			{
-				From = { Pos = Vector3.new(470, 30, 60), Look = Vector3.new(560, 10, -40) },
-				To = { Pos = Vector3.new(500, 22, 20), Look = Vector3.new(580, 8, -60) },
+				From = { Pos = far(470, 30, 60), Look = far(560, 10, -40) },
+				To = { Pos = far(500, 22, 20), Look = far(580, 8, -60) },
 				Duration = 10,
 				Lines = {
 					{ Speaker = VOICE, Text = "Did you notice? The wolves weren't hunting. They were fleeing." },
@@ -175,8 +181,8 @@ Story.Cutscenes = {
 		Music = "Echo",
 		Shots = {
 			{
-				From = { Pos = Vector3.new(120, 50, -650), Look = Vector3.new(220, 5, -800) },
-				To = { Pos = Vector3.new(170, 30, -700), Look = Vector3.new(220, 5, -820) },
+				From = { Pos = far(120, 50, -650), Look = far(220, 5, -800) },
+				To = { Pos = far(170, 30, -700), Look = far(220, 5, -820) },
 				Duration = 11,
 				Lines = {
 					{
@@ -201,8 +207,8 @@ Story.Cutscenes = {
 				Lines = { { Speaker = VOICE, Text = "I remember now. Some of it. Enough." } },
 			},
 			{
-				From = { Pos = Vector3.new(800, 120, -800), Look = Vector3.new(1180, 20, -1180) },
-				To = { Pos = Vector3.new(950, 120, -950), Look = Vector3.new(1180, 40, -1180) },
+				From = { Pos = far(800, 120, -800), Look = far(1180, 20, -1180) },
+				To = { Pos = far(950, 120, -950), Look = far(1180, 40, -1180) },
 				Duration = 16,
 				Lines = {
 					{ Speaker = VOICE, Text = "The dead in that crypt were soldiers. Your soldiers. The Ashen Guard." },
@@ -230,8 +236,8 @@ Story.Cutscenes = {
 		Music = "Echo",
 		Shots = {
 			{
-				From = { Pos = Vector3.new(1120, 25, -1100), Look = Vector3.new(1180, 5, -1180) },
-				To = { Pos = Vector3.new(1150, 15, -1140), Look = Vector3.new(1180, 4, -1180) },
+				From = { Pos = far(1120, 25, -1100), Look = far(1180, 5, -1180) },
+				To = { Pos = far(1150, 15, -1140), Look = far(1180, 4, -1180) },
 				Duration = 7,
 				Lines = { { Speaker = "The Ashen Wyrmling", Text = "Mother... remembers you... Oathbreaker." } },
 			},
@@ -268,8 +274,8 @@ Story.Cutscenes = {
 		Music = "Echo",
 		Shots = {
 			{
-				From = { Pos = Vector3.new(-470, 30, -580), Look = Vector3.new(-520, 4, -640) },
-				To = { Pos = Vector3.new(-495, 14, -605), Look = Vector3.new(-520, 3, -640) },
+				From = { Pos = far(-470, 30, -580), Look = far(-520, 4, -640) },
+				To = { Pos = far(-495, 14, -605), Look = far(-520, 3, -640) },
 				Duration = 12,
 				Lines = {
 					{
@@ -306,8 +312,8 @@ Story.Cutscenes = {
 		Music = "Echo",
 		Shots = {
 			{
-				From = { Pos = Vector3.new(1110, 30, -1090), Look = Vector3.new(1180, 6, -1180) },
-				To = { Pos = Vector3.new(1140, 20, -1130), Look = Vector3.new(1180, 4, -1180) },
+				From = { Pos = far(1110, 30, -1090), Look = far(1180, 6, -1180) },
+				To = { Pos = far(1140, 20, -1130), Look = far(1180, 4, -1180) },
 				Duration = 10,
 				Lines = {
 					{

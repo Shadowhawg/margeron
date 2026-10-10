@@ -185,6 +185,12 @@ local handlers = {
 		return Services.GovernmentService.ClaimTreasury(player)
 	end,
 
+	ToggleWeapon = function(player)
+		local drawn = Services.AppearanceService.IsWeaponDrawn(player)
+		Services.PropertyService.Dismount(player)
+		return { ok = true, drawn = Services.AppearanceService.SetWeaponDrawn(player, not drawn) }
+	end,
+
 	StudioPurchase = function(player, key)
 		if not isString(key) then
 			return { ok = false }

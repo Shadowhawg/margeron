@@ -13,7 +13,7 @@ an endless supply of procedurally generated bounties.
 | --- | --- |
 | Cinematic story: prologue, five memory cutscenes ("Echoes"), cutscene-style NPC conversations | ✅ |
 | Character creation: 6 races (each with a bonus), gender, height, build, skin, 9 hair styles, beards, outfits | ✅ |
-| Open world (3,600 × 3,600 studs): hills, mountains, volcano, river, lakes, forests, 8 regions, 12 landmarks | ✅ |
+| Open world (5,760 × 5,760 studs): mountain ranges, a hill-ringed home valley, volcano, river, lakes, forests and groves, 8 regions, 12 landmarks | ✅ |
 | Aurelion, the Crown City: island capital with walls, causeway, White Tower, palace, market, temple, arena | ✅ |
 | Riverwatch: stone curtain walls, gatehouses, cobbled streets, detailed timber-framed houses, inn | ✅ |
 | Day/night cycle (servers open at night), invented calendar with holidays, night dangers and rewards | ✅ |
@@ -72,7 +72,8 @@ Enable Studio Access to API Services**.
 
 | Action | PC | Gamepad | Mobile |
 | --- | --- | --- | --- |
-| Attack (hold to repeat) | Left click | R2 | Attack button |
+| Attack (hold to repeat; draws your weapon first) | Left click | R2 | Attack button |
+| Draw / sheathe weapon | R | D-pad down | Sheathe button |
 | Abilities | 1 / 2 / 3 | X / Y / L2 | Ability buttons |
 | Ride / dismount horse | H | L1 | Ride button |
 | Crouch / sneak | C | L3 | Sneak button |

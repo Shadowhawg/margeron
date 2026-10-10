@@ -107,12 +107,27 @@ function CrownCity.Build(groundAt)
 	})
 
 	-- Streets -----------------------------------------------------------------------------
+	-- The arena (east), temple (south) and memorial gardens (north) are open plazas: the ring road
+	-- and the avenues stop at their edges instead of running through them.
+	local plazas = {
+		{ X = 150, Z = 0, R = 46 }, -- arena
+		{ X = 0, Z = -150, R = 40 }, -- temple
+		{ X = 0, Z = 150, R = 40 }, -- gardens
+	}
+	local function inPlaza(x, z, margin)
+		for _, p in ipairs(plazas) do
+			if (x - p.X) ^ 2 + (z - p.Z) ^ 2 < (p.R + (margin or 0)) ^ 2 then
+				return true
+			end
+		end
+		return false
+	end
 	local paving = { Color = rgb(200, 195, 185), Material = Enum.Material.Pavement }
-	Architecture.Street(at(-city.WallRadius - 6, 0), at(-64, 0), 14, groundAt, paving)
+	Architecture.Street(at(-city.WallRadius - 6, 0), at(-70, 0), 14, groundAt, paving)
 	for _, a in ipairs({ 0, math.pi / 2, -math.pi / 2 }) do
 		Architecture.Street(
-			at(math.cos(a) * 64, math.sin(a) * 64),
-			at(math.cos(a) * (city.WallRadius - 6), math.sin(a) * (city.WallRadius - 6)),
+			at(math.cos(a) * 70, math.sin(a) * 70),
+			at(math.cos(a) * 106, math.sin(a) * 106),
 			12,
 			groundAt,
 			paving
@@ -121,20 +136,28 @@ function CrownCity.Build(groundAt)
 	local ringPoints = 40
 	for i = 0, ringPoints - 1 do
 		local a0, a1 = i / ringPoints * math.pi * 2, (i + 1) / ringPoints * math.pi * 2
-		Architecture.Street(
-			at(math.cos(a0) * 120, math.sin(a0) * 120),
-			at(math.cos(a1) * 120, math.sin(a1) * 120),
-			12,
-			groundAt,
-			paving
-		)
-		if i % 3 == 0 then
-			Architecture.Lamp(at(math.cos(a0) * 128, math.sin(a0) * 128))
+		local am = (a0 + a1) / 2
+		if not inPlaza(math.cos(am) * 120, math.sin(am) * 120, 4) then
+			Architecture.Street(
+				at(math.cos(a0) * 120, math.sin(a0) * 120),
+				at(math.cos(a1) * 120, math.sin(a1) * 120),
+				12,
+				groundAt,
+				paving
+			)
+		end
+		local lx, lz = math.cos(a0) * 128, math.sin(a0) * 128
+		if i % 3 == 0 and not inPlaza(lx, lz, 2) then
+			Architecture.Lamp(at(lx, lz))
 		end
 	end
 	for _, r in ipairs({ 80, 100, 145, 165 }) do
 		for _, a in ipairs({ math.pi, 0, math.pi / 2, -math.pi / 2 }) do
-			Architecture.Lamp(at(math.cos(a) * r + math.sin(a) * 9, math.sin(a) * r - math.cos(a) * 9))
+			-- Just outside the avenue's edge, clear of the houses lining it.
+			local x, z = math.cos(a) * r + math.sin(a) * 8.5, math.sin(a) * r - math.cos(a) * 8.5
+			if not inPlaza(x, z, 2) then
+				Architecture.Lamp(at(x, z))
+			end
 		end
 	end
 
@@ -576,11 +599,12 @@ function CrownCity.Build(groundAt)
 	local placed = {}
 	local function clear(x, z)
 		local r = math.sqrt(x * x + z * z)
-		if math.abs(r - 120) < 13 then
+		if math.abs(r - 120) < 16 then
 			return false -- ring street
 		end
 		-- avenues: west (gate), east, north, south
-		if (math.abs(z) < 13 and r > 60) or (math.abs(x) < 13 and r > 60) then
+		-- Houses are up to ~21 studs across, so their centres stay 20 studs off an avenue's centre line.
+		if (math.abs(z) < 20 and r > 60) or (math.abs(x) < 20 and r > 60) then
 			return false
 		end
 		for _, res in ipairs(reserved) do

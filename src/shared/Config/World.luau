@@ -4,7 +4,14 @@
 -- landmark id or plot id (e.g. "Plot1") to move them.
 --
 -- Coordinates: X = east/west, Z = north(-)/south(+). The map spans -MapHalfSize..MapHalfSize.
-local CITY = Vector3.new(1080, 0, 180)
+-- The wilds are laid out on a grid and stretched by SCALE, so the valley around Riverwatch can grow
+-- without moving the town, the farms or the river. far(x, z) places something out in the wilds.
+local SCALE = 1.6
+local function far(x, z)
+	return Vector3.new(x * SCALE, 0, z * SCALE)
+end
+
+local CITY = far(1080, 180)
 -- The city's main gate faces north-west (away from where the river enters the lake).
 local CITY_GATE_ANGLE = math.pi + 0.61
 
@@ -15,7 +22,8 @@ local function cityPoint(x, z)
 end
 
 return {
-	MapHalfSize = 1800,
+	MapHalfSize = 2880,
+	Scale = SCALE,
 	WaterLevel = 0,
 	Seed = 1337,
 
@@ -82,7 +90,7 @@ return {
 		Blacksmith = {
 			Name = "Brann",
 			Role = "Blacksmith",
-			Position = Vector3.new(38, 0, -6),
+			Position = Vector3.new(36, 0, -16),
 			Color = Color3.fromRGB(110, 70, 40),
 			Greeting = "Need an edge? Or need one sharpened? Either way, mind the sparks.",
 			Greetings = {
@@ -228,7 +236,7 @@ return {
 
 	-- Crafting stations in town. Players' homes add their own (see Config/Property).
 	Stations = {
-		{ Station = "Forge", Position = Vector3.new(46, 0, -12) },
+		{ Station = "Forge", Position = Vector3.new(46, 0, -20) },
 		{ Station = "AlchemyTable", Position = Vector3.new(-32, 0, -46) },
 		{ Station = "CookingPot", Position = Vector3.new(-14, 0, 34) },
 		{ Station = "Workbench", Position = Vector3.new(34, 0, 38) },
@@ -242,8 +250,8 @@ return {
 		WolfWoods = {
 			Name = "Whisperwood",
 			Levels = "1-3",
-			Position = Vector3.new(560, 0, -40),
-			Radius = 150,
+			Position = far(560, -40),
+			Radius = 180,
 			Material = Enum.Material.LeafyGrass,
 			Biome = "Forest",
 			RespawnTime = 12,
@@ -252,8 +260,8 @@ return {
 		BanditCamp = {
 			Name = "Redfang Camp",
 			Levels = "3-5",
-			Position = Vector3.new(-700, 0, 560),
-			Radius = 100,
+			Position = far(-700, 560),
+			Radius = 120,
 			Material = Enum.Material.Ground,
 			Biome = "Camp",
 			RespawnTime = 18,
@@ -262,8 +270,8 @@ return {
 		HollowCrypt = {
 			Name = "Hollow Crypt",
 			Levels = "6-9",
-			Position = Vector3.new(220, 0, -800),
-			Radius = 100,
+			Position = far(220, -800),
+			Radius = 120,
 			Material = Enum.Material.Slate,
 			Biome = "Crypt",
 			RespawnTime = 18,
@@ -272,8 +280,8 @@ return {
 		Mirelake = {
 			Name = "Mirelake Marsh",
 			Levels = "7-9",
-			Position = Vector3.new(900, 0, 720),
-			Radius = 160,
+			Position = far(900, 720),
+			Radius = 192,
 			Material = Enum.Material.Mud,
 			Biome = "Marsh",
 			RespawnTime = 18,
@@ -282,8 +290,8 @@ return {
 		CinderPeak = {
 			Name = "Cinder Peak",
 			Levels = "9-12 (Bosses)",
-			Position = Vector3.new(1180, 0, -1180),
-			Radius = 110,
+			Position = far(1180, -1180),
+			Radius = 132,
 			Material = Enum.Material.Basalt,
 			Biome = "Volcano",
 			RespawnTime = 120,
@@ -292,8 +300,8 @@ return {
 		FrostHollow = {
 			Name = "Frosthollow",
 			Levels = "10-12",
-			Position = Vector3.new(-1050, 0, -1000),
-			Radius = 190,
+			Position = far(-1050, -1000),
+			Radius = 228,
 			Material = Enum.Material.Snow,
 			Biome = "Snow",
 			RespawnTime = 20,
@@ -302,8 +310,8 @@ return {
 		VaelRuins = {
 			Name = "Ruins of Vael",
 			Levels = "12-15",
-			Position = Vector3.new(-1250, 0, 400),
-			Radius = 160,
+			Position = far(-1250, 400),
+			Radius = 192,
 			Material = Enum.Material.Pavement,
 			Biome = "Ruins",
 			RespawnTime = 25,
@@ -313,76 +321,76 @@ return {
 
 	-- Lakes carved into the terrain.
 	Lakes = {
-		{ Name = "Glass Lake", Position = Vector3.new(-520, 0, -640), Radius = 130, Island = 26 },
-		{ Name = "Mirelake", Position = Vector3.new(1160, 0, 940), Radius = 95 },
-		{ Name = "Millpond", Position = Vector3.new(430, 0, 720), Radius = 45 },
+		{ Name = "Glass Lake", Position = far(-520, -640), Radius = 170, Island = 34 },
+		{ Name = "Mirelake", Position = far(1160, 940), Radius = 124 },
+		{ Name = "Millpond", Position = far(430, 720), Radius = 58 },
 	},
 
 	-- The volcano rising under Cinder Peak.
-	Volcano = { Position = Vector3.new(1180, 0, -1180), BaseRadius = 620, Height = 260, TopRadius = 115 },
+	Volcano = { Position = far(1180, -1180), BaseRadius = 900, Height = 330, TopRadius = 140 },
 
 	-- Discoverable places. Finding one grants XP and marks it on your map (M).
 	Landmarks = {
 		{
 			Id = "Greyspire",
 			Name = "Greyspire Watchtower",
-			Position = Vector3.new(-330, 0, -330),
+			Position = far(-330, -330),
 			Kind = "Tower",
 			XP = 80,
 		},
-		{ Id = "StonesOfAel", Name = "Stones of Ael", Position = Vector3.new(430, 0, 330), Kind = "Stones", XP = 80 },
-		{ Id = "ElderOak", Name = "The Elder Oak", Position = Vector3.new(780, 0, -330), Kind = "ElderTree", XP = 100 },
+		{ Id = "StonesOfAel", Name = "Stones of Ael", Position = far(430, 330), Kind = "Stones", XP = 80 },
+		{ Id = "ElderOak", Name = "The Elder Oak", Position = far(780, -330), Kind = "ElderTree", XP = 100 },
 		{
 			Id = "AshenOverlook",
 			Name = "Ashen Overlook",
-			Position = Vector3.new(720, 0, -780),
+			Position = far(720, -780),
 			Kind = "Overlook",
 			XP = 150,
 		},
 		{
 			Id = "DrownedShrine",
 			Name = "The Drowned Shrine",
-			Position = Vector3.new(-520, 0, -640),
+			Position = far(-520, -640),
 			Kind = "Shrine",
 			XP = 150,
 		},
 		{
 			Id = "HermitsHollow",
 			Name = "Hermit's Hollow",
-			Position = Vector3.new(-860, 0, -300),
+			Position = far(-860, -300),
 			Kind = "Hut",
 			XP = 100,
 		},
 		{
 			Id = "WreckOfTheGull",
 			Name = "Wreck of the Gull",
-			Position = Vector3.new(1060, 0, 880),
+			Position = far(1060, 880),
 			Kind = "Wreck",
 			XP = 150,
 		},
 		{
 			Id = "FrozenColossus",
 			Name = "The Frozen Colossus",
-			Position = Vector3.new(-1280, 0, -1260),
+			Position = far(-1280, -1260),
 			Kind = "Colossus",
 			XP = 250,
 		},
 		{
 			Id = "KingsroadShrine",
 			Name = "Kingsroad Shrine",
-			Position = Vector3.new(-330, 0, 320),
+			Position = far(-330, 320),
 			Kind = "Shrine",
 			XP = 60,
 		},
 		{
 			Id = "SilverfallMine",
 			Name = "Silverfall Mine",
-			Position = Vector3.new(-1350, 0, -520),
+			Position = far(-1350, -520),
 			Kind = "Mine",
 			XP = 150,
 		},
-		{ Id = "SunkenGate", Name = "The Sunken Gate", Position = Vector3.new(-1000, 0, 420), Kind = "Arch", XP = 120 },
-		{ Id = "BeaconHill", Name = "Beacon Hill", Position = Vector3.new(380, 0, 1050), Kind = "Tower", XP = 120 },
+		{ Id = "SunkenGate", Name = "The Sunken Gate", Position = far(-1000, 420), Kind = "Arch", XP = 120 },
+		{ Id = "BeaconHill", Name = "Beacon Hill", Position = far(380, 1050), Kind = "Tower", XP = 120 },
 	},
 
 	-- Roads (painted on the terrain; bridges are added where they cross the river).

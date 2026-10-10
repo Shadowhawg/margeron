@@ -22,6 +22,7 @@ Cinematic.Playing = false -- a story cutscene is running
 Cinematic.Active = false -- letterbox mode is on (cutscene or conversation)
 
 local gui, topBar, bottomBar, fade, titleCard, speakerLabel, lineLabel, skipButton, hint
+local advances = 0 -- lines the player has advanced themselves (for the "click to continue" hint)
 local advanceSignal = Instance.new("BindableEvent")
 local skipRequested = false
 local lineId = 0 -- each ShowLine call gets an id; starting a new line ends the old one
@@ -164,7 +165,14 @@ function Cinematic.ShowLine(speaker, text, autoAdvance)
 	end
 	lineLabel.MaxVisibleGraphemes = -1
 
-	-- Wait for the reader (or auto-advance after a reading pause).
+	-- Wait for the reader (or auto-advance after a reading pause). Until they've advanced a few
+	-- lines themselves, quietly tell new players how.
+	if advances < 3 then
+		local touch = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+		hint.Text = (touch and "tap to continue" or "click to continue") .. "   ▼"
+	else
+		hint.Text = "▼"
+	end
 	hint.Visible = true
 	local readTime = autoAdvance and (1.6 + #text * 0.035) or math.huge
 	local started = os.clock()
@@ -377,7 +385,9 @@ function Cinematic.Init()
 	hint = Create.Label("▼", {
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(0.86, 0, 1, -10),
-		Size = UDim2.fromOffset(30, 24),
+		Size = UDim2.fromOffset(260, 24),
+		Font = Enum.Font.Garamond,
+		TextSize = 17,
 		TextColor3 = Theme.Muted,
 		TextXAlignment = Enum.TextXAlignment.Right,
 		Visible = false,
@@ -426,16 +436,17 @@ function Cinematic.Init()
 		}),
 	})
 
-	-- Click anywhere on the letterbox, press Space/Enter, or tap to advance.
+	-- Click or tap anywhere on screen, or press Space/Enter, to advance.
 	local clickCatcher = New("TextButton", {
 		Name = "Advance",
 		Text = "",
 		BackgroundTransparency = 1,
 		Size = UDim2.fromScale(1, 1),
-		ZIndex = 3,
-		Parent = bottomBar,
+		ZIndex = 1,
+		Parent = gui,
 	})
 	clickCatcher.Activated:Connect(function()
+		advances += 1
 		advanceSignal:Fire()
 	end)
 	UserInputService.InputBegan:Connect(function(input)
@@ -447,6 +458,7 @@ function Cinematic.Init()
 			or input.KeyCode == Enum.KeyCode.Return
 			or input.KeyCode == Enum.KeyCode.ButtonA
 		then
+			advances += 1
 			advanceSignal:Fire()
 		end
 	end)
