@@ -1,0 +1,8 @@
+# Build output
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+sourcemap.json
+/build
+roblox.yml
